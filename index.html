@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ru" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tools Portal — 60+ конвертеров и инструментов</title>
+  <meta name="description" content="Бесплатный онлайн-портал с более чем 50 конвертерами файлов: изображения, видео, аудио, документы и полезные утилиты." />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0f9ff',
+              100: '#e0f2fe',
+              500: '#0ea5e9',
+              600: '#0284c7',
+              700: '#0369a1',
+              900: '#0c4a6e'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    [x-cloak] { display: none !important; }
+    .tool-card:hover { transform: translateY(-4px); }
+    .dropzone.dragover { border-color: #0ea5e9; background-color: rgba(14, 165, 233, 0.05); }
+  </style>
+</head>
+<body class="h-full bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 transition-colors duration-200">
+
+  <!-- Header -->
+  <header class="sticky top-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur border-b border-slate-200 dark:border-slate-700">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <a href="#" class="flex items-center gap-2 font-bold text-xl text-brand-600 dark:text-brand-500">
+          <i class="fas fa-tools"></i>
+          <span>Tools Portal</span>
+        </a>
+        
+        <div class="flex-1 max-w-xl mx-8 hidden md:block">
+          <div class="relative">
+            <input id="search-input" type="search" placeholder="Поиск инструментов..." 
+              class="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm" />
+            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <button id="theme-toggle" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition" title="Сменить тему">
+            <i class="fas fa-moon dark:hidden"></i>
+            <i class="fas fa-sun hidden dark:inline"></i>
+          </button>
+          <a href="https://github.com/ivanivorontsov-sudo/tools-portal" target="_blank" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition" title="GitHub">
+            <i class="fab fa-github text-xl"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main -->
+  <main id="app" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-[calc(100vh-8rem)]">
+    <!-- Content rendered by JS -->
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-200 dark:border-slate-700 mt-12">
+    <div class="max-w-7xl mx-auto px-4 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
+      <p>© 2026 Tools Portal · Более 60 бесплатных инструментов · Все обработки на стороне клиента где возможно</p>
+      <p class="mt-2">Открытый исходный код на <a href="https://github.com/ivanivorontsov-sudo/tools-portal" class="text-brand-600 hover:underline">GitHub</a></p>
+    </div>
+  </footer>
+
+  <script src="assets/js/tools-data.js"></script>
+  <script src="assets/js/app.js"></script>
+</body>
+</html>

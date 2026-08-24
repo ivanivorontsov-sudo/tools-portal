@@ -1,0 +1,83 @@
+// Список всех инструментов (60+)
+const TOOLS = [
+  // === Images (15) ===
+  { id: "jpg-to-png", name: "JPG → PNG", category: "image", icon: "fa-image", desc: "Конвертация JPG в PNG с прозрачностью", client: true },
+  { id: "png-to-jpg", name: "PNG → JPG", category: "image", icon: "fa-image", desc: "Конвертация PNG в JPG", client: true },
+  { id: "webp-to-png", name: "WEBP → PNG", category: "image", icon: "fa-image", desc: "Конвертация WEBP в PNG", client: true },
+  { id: "png-to-webp", name: "PNG → WEBP", category: "image", icon: "fa-image", desc: "Конвертация PNG в современный WEBP", client: true },
+  { id: "jpg-to-webp", name: "JPG → WEBP", category: "image", icon: "fa-image", desc: "Конвертация JPG в WEBP", client: true },
+  { id: "svg-to-png", name: "SVG → PNG", category: "image", icon: "fa-vector-square", desc: "Растеризация SVG в PNG", client: true },
+  { id: "bmp-to-jpg", name: "BMP → JPG", category: "image", icon: "fa-image", desc: "Конвертация BMP в JPG", client: true },
+  { id: "tiff-to-png", name: "TIFF → PNG", category: "image", icon: "fa-image", desc: "Конвертация TIFF в PNG", client: false },
+  { id: "ico-to-png", name: "ICO → PNG", category: "image", icon: "fa-icons", desc: "Конвертация ICO в PNG", client: true },
+  { id: "gif-to-png", name: "GIF → PNG", category: "image", icon: "fa-image", desc: "Извлечение кадров GIF в PNG", client: true },
+  { id: "avif-to-jpg", name: "AVIF → JPG", category: "image", icon: "fa-image", desc: "Конвертация AVIF в JPG", client: false },
+  { id: "png-to-ico", name: "PNG → ICO", category: "image", icon: "fa-icons", desc: "Создание ICO из PNG", client: true },
+  { id: "image-to-base64", name: "Image → Base64", category: "image", icon: "fa-code", desc: "Кодирование изображения в Base64", client: true },
+  { id: "base64-to-image", name: "Base64 → Image", category: "image", icon: "fa-code", desc: "Декодирование Base64 в изображение", client: true },
+  { id: "image-resizer", name: "Изменение размера", category: "image", icon: "fa-expand", desc: "Изменение размера изображения", client: true },
+
+  // === Video (10) ===
+  { id: "mp4-to-avi", name: "MP4 → AVI", category: "video", icon: "fa-video", desc: "Конвертация MP4 в AVI", client: false },
+  { id: "mov-to-mp4", name: "MOV → MP4", category: "video", icon: "fa-video", desc: "Конвертация MOV в MP4", client: false },
+  { id: "mkv-to-mp4", name: "MKV → MP4", category: "video", icon: "fa-video", desc: "Конвертация MKV в MP4", client: false },
+  { id: "webm-to-mp4", name: "WebM → MP4", category: "video", icon: "fa-video", desc: "Конвертация WebM в MP4", client: false },
+  { id: "avi-to-mp4", name: "AVI → MP4", category: "video", icon: "fa-video", desc: "Конвертация AVI в MP4", client: false },
+  { id: "flv-to-mp4", name: "FLV → MP4", category: "video", icon: "fa-video", desc: "Конвертация FLV в MP4", client: false },
+  { id: "wmv-to-mp4", name: "WMV → MP4", category: "video", icon: "fa-video", desc: "Конвертация WMV в MP4", client: false },
+  { id: "3gp-to-mp4", name: "3GP → MP4", category: "video", icon: "fa-video", desc: "Конвертация 3GP в MP4", client: false },
+  { id: "video-to-gif", name: "Video → GIF", category: "video", icon: "fa-film", desc: "Конвертация видео в GIF", client: false },
+  { id: "extract-audio", name: "Извлечь аудио", category: "video", icon: "fa-music", desc: "Извлечение аудиодорожки из видео", client: false },
+
+  // === Audio (10) ===
+  { id: "mp3-to-wav", name: "MP3 → WAV", category: "audio", icon: "fa-music", desc: "Конвертация MP3 в WAV", client: false },
+  { id: "wav-to-mp3", name: "WAV → MP3", category: "audio", icon: "fa-music", desc: "Конвертация WAV в MP3", client: false },
+  { id: "flac-to-mp3", name: "FLAC → MP3", category: "audio", icon: "fa-music", desc: "Конвертация FLAC в MP3", client: false },
+  { id: "aac-to-mp3", name: "AAC → MP3", category: "audio", icon: "fa-music", desc: "Конвертация AAC в MP3", client: false },
+  { id: "ogg-to-mp3", name: "OGG → MP3", category: "audio", icon: "fa-music", desc: "Конвертация OGG в MP3", client: false },
+  { id: "m4a-to-mp3", name: "M4A → MP3", category: "audio", icon: "fa-music", desc: "Конвертация M4A в MP3", client: false },
+  { id: "wma-to-mp3", name: "WMA → MP3", category: "audio", icon: "fa-music", desc: "Конвертация WMA в MP3", client: false },
+  { id: "aiff-to-mp3", name: "AIFF → MP3", category: "audio", icon: "fa-music", desc: "Конвертация AIFF в MP3", client: false },
+  { id: "mp3-to-ogg", name: "MP3 → OGG", category: "audio", icon: "fa-music", desc: "Конвертация MP3 в OGG", client: false },
+  { id: "audio-to-base64", name: "Audio → Base64", category: "audio", icon: "fa-code", desc: "Кодирование аудио в Base64", client: true },
+
+  // === Documents (10) ===
+  { id: "pdf-to-docx", name: "PDF → DOCX", category: "document", icon: "fa-file-pdf", desc: "Конвертация PDF в Word", client: false },
+  { id: "docx-to-pdf", name: "DOCX → PDF", category: "document", icon: "fa-file-word", desc: "Конвертация Word в PDF", client: false },
+  { id: "pdf-to-txt", name: "PDF → TXT", category: "document", icon: "fa-file-alt", desc: "Извлечение текста из PDF", client: false },
+  { id: "txt-to-pdf", name: "TXT → PDF", category: "document", icon: "fa-file-alt", desc: "Создание PDF из текста", client: true },
+  { id: "pdf-to-jpg", name: "PDF → JPG", category: "document", icon: "fa-file-image", desc: "Конвертация страниц PDF в JPG", client: false },
+  { id: "jpg-to-pdf", name: "JPG → PDF", category: "document", icon: "fa-file-pdf", desc: "Создание PDF из изображений", client: true },
+  { id: "html-to-pdf", name: "HTML → PDF", category: "document", icon: "fa-file-code", desc: "Конвертация HTML в PDF", client: false },
+  { id: "markdown-to-html", name: "Markdown → HTML", category: "document", icon: "fa-markdown", desc: "Конвертация Markdown в HTML", client: true },
+  { id: "csv-to-json", name: "CSV → JSON", category: "document", icon: "fa-file-csv", desc: "Конвертация CSV в JSON", client: true },
+  { id: "json-to-csv", name: "JSON → CSV", category: "document", icon: "fa-file-code", desc: "Конвертация JSON в CSV", client: true },
+
+  // === Utilities (15+) ===
+  { id: "image-compressor", name: "Сжатие изображений", category: "utility", icon: "fa-compress", desc: "Сжатие JPG/PNG/WEBP без потери качества", client: true },
+  { id: "pdf-merger", name: "Объединение PDF", category: "utility", icon: "fa-object-group", desc: "Объединение нескольких PDF в один", client: false },
+  { id: "pdf-splitter", name: "Разделение PDF", category: "utility", icon: "fa-cut", desc: "Разделение PDF на страницы", client: false },
+  { id: "qr-generator", name: "Генератор QR-кодов", category: "utility", icon: "fa-qrcode", desc: "Создание QR-кодов из текста/URL", client: true },
+  { id: "password-generator", name: "Генератор паролей", category: "utility", icon: "fa-key", desc: "Надёжные случайные пароли", client: true },
+  { id: "unit-converter", name: "Конвертер единиц", category: "utility", icon: "fa-ruler", desc: "Длина, вес, температура, объём и др.", client: true },
+  { id: "color-picker", name: "Палитра цветов", category: "utility", icon: "fa-palette", desc: "Выбор цвета и конвертация HEX/RGB/HSL", client: true },
+  { id: "base64-encoder", name: "Base64 Кодер/Декодер", category: "utility", icon: "fa-code", desc: "Кодирование и декодирование Base64", client: true },
+  { id: "url-encoder", name: "URL Кодер/Декодер", category: "utility", icon: "fa-link", desc: "Кодирование и декодирование URL", client: true },
+  { id: "json-formatter", name: "JSON Форматтер", category: "utility", icon: "fa-brackets-curly", desc: "Форматирование и валидация JSON", client: true },
+  { id: "hash-generator", name: "Генератор хешей", category: "utility", icon: "fa-hashtag", desc: "MD5, SHA-1, SHA-256 и др.", client: true },
+  { id: "lorem-ipsum", name: "Lorem Ipsum", category: "utility", icon: "fa-paragraph", desc: "Генератор текста-заполнителя", client: true },
+  { id: "case-converter", name: "Регистр текста", category: "utility", icon: "fa-font", desc: "UPPER, lower, Title, camelCase и др.", client: true },
+  { id: "word-counter", name: "Счётчик слов", category: "utility", icon: "fa-calculator", desc: "Подсчёт слов, символов, предложений", client: true },
+  { id: "uuid-generator", name: "Генератор UUID", category: "utility", icon: "fa-fingerprint", desc: "Генерация UUID v4", client: true },
+  { id: "favicon-generator", name: "Генератор Favicon", category: "utility", icon: "fa-star", desc: "Создание favicon из изображения", client: true },
+  { id: "timestamp-converter", name: "Unix Timestamp", category: "utility", icon: "fa-clock", desc: "Конвертация Unix timestamp ↔ дата", client: true },
+  { id: "regex-tester", name: "Тестер Regex", category: "utility", icon: "fa-search", desc: "Тестирование регулярных выражений", client: true },
+];
+
+const CATEGORIES = {
+  image: { name: "Изображения", icon: "fa-image", color: "bg-pink-100 text-pink-700 dark:bg-pink-900/40 dark:text-pink-300" },
+  video: { name: "Видео", icon: "fa-video", color: "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300" },
+  audio: { name: "Аудио", icon: "fa-music", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300" },
+  document: { name: "Документы", icon: "fa-file-alt", color: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300" },
+  utility: { name: "Утилиты", icon: "fa-toolbox", color: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300" },
+};
