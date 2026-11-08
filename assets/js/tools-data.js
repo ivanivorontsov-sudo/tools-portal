@@ -42,6 +42,7 @@ const TOOLS = [
   { id: "audio-to-base64", name: "Audio → Base64", category: "audio", icon: "fa-code", desc: "Кодирование аудио в Base64", client: true },
 
   // === Documents (10) ===
+  { id: "pdf-master", name: "PDF Мастер", category: "document", icon: "fa-file-pdf", desc: "Объединение, сортировка, поворот и извлечение страниц PDF — в браузере без регистрации и подписки", client: true, externalUrl: "pdf-master/" },
   { id: "pdf-to-docx", name: "PDF → DOCX", category: "document", icon: "fa-file-pdf", desc: "Конвертация PDF в Word", client: false },
   { id: "docx-to-pdf", name: "DOCX → PDF", category: "document", icon: "fa-file-word", desc: "Конвертация Word в PDF", client: false },
   { id: "pdf-to-txt", name: "PDF → TXT", category: "document", icon: "fa-file-alt", desc: "Извлечение текста из PDF", client: false },
