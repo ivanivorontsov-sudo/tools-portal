@@ -73,6 +73,7 @@ const TOOLS = [
   { id: "favicon-generator", name: "Генератор Favicon", category: "utility", icon: "fa-star", desc: "Создание favicon из изображения", client: true },
   { id: "timestamp-converter", name: "Unix Timestamp", category: "utility", icon: "fa-clock", desc: "Конвертация Unix timestamp ↔ дата", client: true },
   { id: "regex-tester", name: "Тестер Regex", category: "utility", icon: "fa-search", desc: "Тестирование регулярных выражений", client: true },
+  { id: "daily-workshop", name: "Ежедневная мастерская", category: "utility", icon: "fa-toolbox", desc: "11 локальных инструментов для текста, файлов, фото, CSV, Markdown и URL", client: true, externalUrl: "https://ivanivorontsov-sudo.github.io/daily-tools/" },
 ];
 
 const CATEGORIES = {
