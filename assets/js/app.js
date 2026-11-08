@@ -100,6 +100,23 @@ function renderTool(id) {
     return;
   }
   const cat = CATEGORIES[tool.category];
+  if (tool.externalUrl) {
+    app.innerHTML = `
+      <div class="max-w-3xl mx-auto">
+        <a href="#" class="text-sm text-brand-600 hover:underline flex items-center gap-1 mb-5"><i class="fas fa-arrow-left"></i> Назад к списку</a>
+        <div class="p-7 sm:p-9 rounded-3xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm">
+          <div class="w-16 h-16 rounded-2xl bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 grid place-items-center text-3xl mb-5"><i class="fas fa-file-pdf"></i></div>
+          <h1 class="text-3xl font-bold mb-3">PDF Мастер</h1>
+          <p class="text-slate-600 dark:text-slate-400 mb-5">Объединение нескольких PDF, сортировка и поворот страниц, удаление лишнего, извлечение диапазонов, нумерация и очистка стандартных метаданных. Файлы обрабатываются в браузере, без аккаунта и подписки.</p>
+          <div class="flex flex-wrap gap-3">
+            <a href="${tool.externalUrl}" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold"><i class="fas fa-arrow-up-right-from-square"></i> Открыть PDF Мастер</a>
+            <a href="${tool.externalUrl}privacy.html" class="inline-flex items-center gap-2 px-5 py-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-brand-500">Политика конфиденциальности</a>
+          </div>
+          <p class="text-xs text-slate-500 mt-6">PDF-файлы не отправляются на сервер. Библиотеки PDF.js и pdf-lib загружаются с публичных CDN; их поставщики видят технические запросы на получение библиотек.</p>
+        </div>
+      </div>`;
+    return;
+  }
 
   app.innerHTML = `
     <div class="mb-6">
