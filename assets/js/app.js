@@ -110,7 +110,7 @@ function renderTool(id) {
           <p class="text-slate-600 dark:text-slate-400 mb-5">Объединение нескольких PDF, сортировка и поворот страниц, удаление лишнего, извлечение диапазонов, нумерация и очистка стандартных метаданных. Файлы обрабатываются в браузере, без аккаунта и подписки.</p>
           <div class="flex flex-wrap gap-3">
             <a href="${tool.externalUrl}" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold"><i class="fas fa-arrow-up-right-from-square"></i> Открыть PDF Мастер</a>
-            <a href="${tool.externalUrl}privacy.html" class="inline-flex items-center gap-2 px-5 py-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-brand-500">Политика конфиденциальности</a>
+            <a href="https://ivanivorontsov-sudo.github.io/pdf-master/privacy.html" class="inline-flex items-center gap-2 px-5 py-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-brand-500">Политика конфиденциальности</a>
           </div>
           <p class="text-xs text-slate-500 mt-6">PDF-файлы не отправляются на сервер. Библиотеки PDF.js и pdf-lib загружаются с публичных CDN; их поставщики видят технические запросы на получение библиотек.</p>
         </div>
