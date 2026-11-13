@@ -28,6 +28,8 @@ Set-ExecutionPolicy -Scope Process Bypass
 
 Загрузчик сохраняет файлы в папку Загрузки/IvanTools-Windows. Он только скачивает и проверяет их — установку или запуск пользователь выполняет сам.
 
+Для Super Ext Pro распакуйте ZIP, откройте страницу расширений браузера (chrome://extensions, edge://extensions или browser://extensions), включите режим разработчика и выберите «Загрузить распакованное».
+
 ## Linux x86_64
 
 Подходит для Debian 13, Ubuntu и совместимых систем. По умолчанию загружаются AppImage; можно выбрать DEB:
