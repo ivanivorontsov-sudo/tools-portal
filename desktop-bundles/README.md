@@ -19,6 +19,7 @@ Set-ExecutionPolicy -Scope Process Bypass
 |---|---|---|
 | daily | Быстрый скрин 1.0.0 | Снимок выбранной области экрана; portable EXE |
 | daily | Подсветка мыши 1.0.0 | Подсветка курсора и визуализация щелчков |
+| daily | Антираскладка 1.1.0 (бета) | Исправление текста, набранного в неверной раскладке; Pause/Break или Ctrl+Shift+Q |
 | daily | Тирпроц 1.3.1 | Офлайн-редактор тир-листов; экспорт PNG/JSON |
 | developer | Понятный 2.5.0 | Компилятор русского языка программирования; CLI |
 | developer | Учитель ИИ 1.2.0 | Обучение и дообучение моделей; Windows ZIP содержит Setup и Portable |
@@ -26,7 +27,7 @@ Set-ExecutionPolicy -Scope Process Bypass
 | creative | Кадр 1.0.0 | ИИ-студия сценария, кадров, озвучки и монтажа видео |
 | browser | Super Ext Pro 1.1 | Расширение для Chrome, Edge и Яндекс Браузера |
 
-Загрузчик сохраняет файлы в папку Загрузки/IvanTools-Windows. Он только скачивает и проверяет их — установку или запуск пользователь выполняет сам.
+Антираскладка включена в группу `daily`. В загрузчике используется последний опубликованный файл `1.1.0-typo` — помечен автором как тестовая сборка с исправлениями RU/EN; перед массовым развёртыванием проверь её на своей Windows. Загрузчик сохраняет файлы в папку Загрузки/IvanTools-Windows. Он только скачивает и проверяет их — установку или запуск пользователь выполняет сам.
 
 Для Super Ext Pro распакуйте ZIP, откройте страницу расширений браузера (chrome://extensions, edge://extensions или browser://extensions), включите режим разработчика и выберите «Загрузить распакованное».
 
@@ -83,5 +84,6 @@ chmod +x install-ivan-tools.sh
 - [Кадр](https://github.com/ivanivorontsov-sudo/kadr-studio)
 - [Быстрый скрин](https://github.com/ivanivorontsov-sudo/bystryj-skrin)
 - [Подсветка мыши](https://github.com/ivanivorontsov-sudo/podsvetka-myshi)
+- [Антираскладка](https://github.com/ivanivorontsov-sudo/antiraskladka)
 - [Super Ext Pro](https://github.com/ivanivorontsov-sudo/super-ext-pro)
 - [Тихо](https://github.com/ivanivorontsov-sudo/tiho-browser)
