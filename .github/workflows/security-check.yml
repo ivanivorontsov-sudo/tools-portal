@@ -33,7 +33,7 @@ on:
       - ".github/workflows/security-check.yml"
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   syntax:
@@ -52,26 +52,12 @@ jobs:
       - name: Install Playwright Chromium
         run: |
           npm install --no-save playwright tailwindcss@3.4.19
-          npx tailwindcss -c tailwind.config.cjs -i assets/css/tailwind.input.css -o assets/css/tailwind.min.css --minify
-          npx playwright install --with-deps chromium
-      - name: Commit generated production CSS
-        run: |
-          if [[ -n "$(git status --porcelain -- assets/css/tailwind.min.css)" ]]; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add assets/css/tailwind.min.css
-            git commit -m "Build production Tailwind CSS"
-            for attempt in 1 2 3; do
-              git fetch origin main
-              git rebase origin/main
-              if git push origin HEAD:main; then
-                exit 0
-              fi
-              sleep 2
-            done
-            echo "Could not publish generated CSS after three safe rebase attempts."
+          npx tailwindcss -c tailwind.config.cjs -i assets/css/tailwind.input.css -o /tmp/tailwind.min.css --minify
+          cmp --silent assets/css/tailwind.min.css /tmp/tailwind.min.css || {
+            echo "Production CSS is out of date. Rebuild it using the command in README.md and commit assets/css/tailwind.min.css."
             exit 1
-          fi
+          }
+          npx playwright install --with-deps chromium
       - name: Browser smoke tests for active tools
         run: |
           set -Eeuo pipefail
