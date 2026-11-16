@@ -9,6 +9,7 @@ const source = fs.readFileSync(ROOT + "/assets/js/tools-data.js", "utf8");
 const tools = source.split("\n").filter(line => line.includes("{ id:")).map(line => ({
   id: (line.match(/id:\s*"([^"]+)"/) || [])[1],
   name: (line.match(/name:\s*"([^"]+)"/) || [])[1],
+  category: (line.match(/category:\s*"([^"]+)"/) || [])[1],
   client: /client:\s*true/.test(line),
   external: /externalUrl:/.test(line)
 })).filter(tool => tool.id);
@@ -51,6 +52,31 @@ const response = await page.goto(BASE + "/", { waitUntil: "domcontentloaded" });
 if (!response || response.status() >= 400) errors.push("index.html: page did not load");
 await page.waitForSelector("#app", { timeout: 7000 }).catch(() => errors.push("index.html: app root missing"));
 record("index");
+
+// Category shortcuts must jump to the right section on the all-in-one page.
+const categoryIds = ["image", "video", "audio", "document", "utility"];
+const categoryNames = { image: "Изображения", video: "Видео", audio: "Аудио", document: "Документы", utility: "Утилиты" };
+for (const key of categoryIds) {
+  if (!(await page.locator('[data-jump="' + key + '"]').count())) errors.push("index: missing quick navigation for " + key);
+  if (!(await page.locator("#category-" + key).count())) errors.push("index: missing category section " + key);
+}
+await page.locator('[data-jump="document"]').click();
+await page.waitForFunction(() => window.scrollY > 0, null, { timeout: 3000 }).catch(() => errors.push("index: category shortcut did not scroll"));
+record("category shortcuts");
+
+// Each category is also a real standalone HTML page with the expected cards.
+for (const key of categoryIds) {
+  const categoryResponse = await page.goto(BASE + "/categories/" + key + ".html", { waitUntil: "domcontentloaded" });
+  if (!categoryResponse || categoryResponse.status() >= 400) errors.push("category page " + key + ": page did not load");
+  await page.waitForFunction(name => document.querySelector("#app h1")?.textContent.trim() === name, categoryNames[key], { timeout: 7000 })
+    .catch(() => errors.push("category page " + key + ": heading missing"));
+  const expectedCount = tools.filter(tool => tool.category === key).length;
+  const actualCount = await page.locator("#app .tool-card").count();
+  if (actualCount !== expectedCount) errors.push("category page " + key + ": expected " + expectedCount + " cards, got " + actualCount);
+  record("category page " + key);
+}
+await page.goto(BASE + "/", { waitUntil: "domcontentloaded" });
+await page.waitForSelector("#app .tool-card", { timeout: 7000 }).catch(() => errors.push("index: catalog did not return after category tests"));
 
 for (const tool of active) {
   await openTool(tool);
