@@ -7,6 +7,7 @@ on:
       - "assets/js/**"
       - "pdf-master/**"
       - "desktop-bundles/linux/**"
+      - "scripts/**"
       - ".github/workflows/security-check.yml"
   pull_request:
     branches: [main]
@@ -32,3 +33,19 @@ jobs:
           node --check pdf-master/app.mjs
       - name: Check Linux installer syntax
         run: bash -n desktop-bundles/linux/install-ivan-tools.sh
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+      - name: Browser smoke tests for active tools
+        run: |
+          set -Eeuo pipefail
+          python -m http.server 8766 --bind 127.0.0.1 >/tmp/portal-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8766/ >/dev/null; then break; fi
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:8766/ >/dev/null
+          node scripts/browser-smoke.mjs
