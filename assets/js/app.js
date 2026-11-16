@@ -695,8 +695,8 @@ async function processClientConversion(tool, file) {
       let quality = 0.92;
       let ext = 'png';
 
-      if (tool.id.includes('jpg') || tool.id === 'bmp-to-jpg') { mime = 'image/jpeg'; ext = 'jpg'; }
-      if (tool.id.includes('webp')) { mime = 'image/webp'; ext = 'webp'; }
+      if (tool.id === 'png-to-jpg' || tool.id === 'bmp-to-jpg') { mime = 'image/jpeg'; ext = 'jpg'; }
+      if (tool.id === 'png-to-webp' || tool.id === 'jpg-to-webp') { mime = 'image/webp'; ext = 'webp'; }
       if (tool.id === 'image-compressor') {
         const allowedImageTypes = {
           'image/jpeg': { mime: 'image/jpeg', ext: 'jpg' },
@@ -717,10 +717,56 @@ async function processClientConversion(tool, file) {
         return;
       }
 
+      if (tool.id === 'png-to-ico') {
+        // ICO can contain an embedded PNG image; keep dimensions within the 256×256 ICO limit.
+        const iconCanvas = document.createElement('canvas');
+        const scale = Math.min(1, 256 / Math.max(w, h));
+        const iconWidth = Math.max(1, Math.round(w * scale));
+        const iconHeight = Math.max(1, Math.round(h * scale));
+        iconCanvas.width = iconWidth;
+        iconCanvas.height = iconHeight;
+        iconCanvas.getContext('2d').drawImage(img, 0, 0, iconWidth, iconHeight);
+        const pngBlob = await new Promise((resolve, reject) => {
+          iconCanvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Не удалось создать PNG для ICO')), 'image/png');
+        });
+        const pngBytes = new Uint8Array(await pngBlob.arrayBuffer());
+        const icoBytes = new Uint8Array(22 + pngBytes.length);
+        const view = new DataView(icoBytes.buffer);
+        view.setUint16(0, 0, true);       // reserved
+        view.setUint16(2, 1, true);       // image type: icon
+        view.setUint16(4, 1, true);       // one image
+        icoBytes[6] = iconWidth === 256 ? 0 : iconWidth;
+        icoBytes[7] = iconHeight === 256 ? 0 : iconHeight;
+        icoBytes[8] = 0;                 // palette
+        icoBytes[9] = 0;                 // reserved
+        view.setUint16(10, 1, true);      // color planes
+        view.setUint16(12, 32, true);     // bits per pixel
+        view.setUint32(14, pngBytes.length, true);
+        view.setUint32(18, 22, true);     // image data offset
+        icoBytes.set(pngBytes, 22);
+        const icoBlob = new Blob([icoBytes], { type: 'image/x-icon' });
+        const icoUrl = URL.createObjectURL(icoBlob);
+        const preview = document.createElement('img');
+        preview.src = icoUrl;
+        preview.alt = 'Предпросмотр ICO';
+        preview.className = 'max-w-full max-h-64 mx-auto rounded-xl shadow mb-4';
+        const link = document.createElement('a');
+        link.href = icoUrl;
+        link.download = 'converted.ico';
+        link.className = 'inline-flex items-center gap-2 px-6 py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-semibold';
+        link.textContent = 'Скачать ICO';
+        link.addEventListener('click', () => setTimeout(() => URL.revokeObjectURL(icoUrl), 30000), { once: true });
+        const wrap = document.createElement('div');
+        wrap.className = 'text-center';
+        wrap.append(preview, link);
+        result.replaceChildren(wrap);
+        return;
+      }
+
       const dataUrl = canvas.toDataURL(mime, quality);
       result.innerHTML = `
         <div class="text-center">
-          <img src="${dataUrl}" class="max-w-full max-h-64 mx-auto rounded-xl shadow mb-4" />
+          <img src="${dataUrl}" class="max-w-full max-h-64 mx-auto rounded-xl shadow mb-4" alt="Результат конвертации" />
           <a href="${dataUrl}" download="converted.${ext}" class="inline-flex items-center gap-2 px-6 py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-semibold">
             <i class="fas fa-download"></i> Скачать ${ext.toUpperCase()}
           </a>
