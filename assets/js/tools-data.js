@@ -1,7 +1,7 @@
 // Список всех инструментов (60+)
 const TOOLS = [
   // === Images (15) ===
-  { id: "jpg-to-png", name: "JPG → PNG", category: "image", icon: "fa-image", desc: "Конвертация JPG в PNG с прозрачностью", client: true },
+  { id: "jpg-to-png", name: "JPG → PNG", category: "image", icon: "fa-image", desc: "Конвертация JPG в PNG; прозрачность не добавляется", client: true },
   { id: "png-to-jpg", name: "PNG → JPG", category: "image", icon: "fa-image", desc: "Конвертация PNG в JPG", client: true },
   { id: "webp-to-png", name: "WEBP → PNG", category: "image", icon: "fa-image", desc: "Конвертация WEBP в PNG", client: true },
   { id: "png-to-webp", name: "PNG → WEBP", category: "image", icon: "fa-image", desc: "Конвертация PNG в современный WEBP", client: true },
@@ -65,7 +65,7 @@ const TOOLS = [
   { id: "base64-encoder", name: "Base64 Кодер/Декодер", category: "utility", icon: "fa-code", desc: "Кодирование и декодирование Base64", client: true },
   { id: "url-encoder", name: "URL Кодер/Декодер", category: "utility", icon: "fa-link", desc: "Кодирование и декодирование URL", client: true },
   { id: "json-formatter", name: "JSON Форматтер", category: "utility", icon: "fa-brackets-curly", desc: "Форматирование и валидация JSON", client: true },
-  { id: "hash-generator", name: "Генератор хешей", category: "utility", icon: "fa-hashtag", desc: "MD5, SHA-1, SHA-256 и др.", client: true },
+  { id: "hash-generator", name: "Генератор хешей", category: "utility", icon: "fa-hashtag", desc: "SHA-1, SHA-256 и SHA-512 для контрольных сумм; не для хранения паролей", client: true },
   { id: "lorem-ipsum", name: "Lorem Ipsum", category: "utility", icon: "fa-paragraph", desc: "Генератор текста-заполнителя", client: true },
   { id: "case-converter", name: "Регистр текста", category: "utility", icon: "fa-font", desc: "UPPER, lower, Title, camelCase и др.", client: true },
   { id: "word-counter", name: "Счётчик слов", category: "utility", icon: "fa-calculator", desc: "Подсчёт слов, символов, предложений", client: true },
