@@ -74,6 +74,7 @@ const TOOLS = [
   { id: "timestamp-converter", name: "Unix Timestamp", category: "utility", icon: "fa-clock", desc: "Конвертация Unix timestamp ↔ дата", client: true },
   { id: "regex-tester", name: "Тестер Regex", category: "utility", icon: "fa-search", desc: "Тестирование регулярных выражений", client: true },
   { id: "daily-workshop", name: "Ежедневная мастерская", category: "utility", icon: "fa-toolbox", desc: "11 локальных инструментов для текста, файлов, фото, CSV, Markdown и URL", client: true, externalUrl: "https://ivanivorontsov-sudo.github.io/daily-tools/" },
+  { id: "funny-generators", name: "Генератор отмазок и приколов", category: "utility", icon: "fa-face-laugh-squint", desc: "Шуточные генераторы причин для мамы, айтишника, учёбы и работы, предсказаний, статусов и титулов", client: true, externalUrl: "https://ivanivorontsov-sudo.github.io/tools-portal/funny-generators/" },
   { id: "zip-create", name: "Создать ZIP-архив", category: "utility", icon: "fa-file-zipper", desc: "Упаковка нескольких файлов в ZIP прямо в браузере без отправки на сервер", client: true },
   { id: "zip-extract", name: "Распаковать ZIP", category: "utility", icon: "fa-folder-open", desc: "Просмотр архива и скачивание отдельных файлов с проверкой размера и путей", client: true },
 ];
