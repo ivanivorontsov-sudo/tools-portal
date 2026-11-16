@@ -48,6 +48,17 @@
 npx serve .
 ~~~
 
+### Пересборка локального CSS
+
+При изменении классов Tailwind или `tailwind.config.cjs` пересоберите production CSS закреплённой версией:
+
+~~~bash
+npm install --no-save tailwindcss@3.4.19
+npx tailwindcss -c tailwind.config.cjs -i assets/css/tailwind.input.css -o assets/css/tailwind.min.css --minify
+~~~
+
+GitHub Actions проверяет, что сохранённый CSS совпадает с результатом сборки. Workflow работает с правом `contents: read` и не коммитит файлы от имени CI.
+
 ## Деплой
 
 Готово к GitHub Pages / Vercel / Netlify.
