@@ -5,15 +5,16 @@ const themeToggle = document.getElementById('theme-toggle');
 
 // Theme
 function initTheme() {
-  if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-    document.documentElement.classList.add('dark');
-  } else {
-    document.documentElement.classList.remove('dark');
-  }
+  let savedTheme = null;
+  try { savedTheme = localStorage.getItem('theme'); } catch (_) {}
+  const prefersDark = window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false;
+  document.documentElement.classList.toggle('dark', savedTheme === 'dark' || (!savedTheme && prefersDark));
 }
 themeToggle.addEventListener('click', () => {
   document.documentElement.classList.toggle('dark');
-  localStorage.theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+  try {
+    localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+  } catch (_) {}
 });
 initTheme();
 
@@ -40,14 +41,17 @@ function renderHome(filterCategory = null, search = '') {
   }
 
   const cats = Object.entries(CATEGORIES);
+  const activeLocalCount = TOOLS.filter(tool => tool.client && !tool.externalUrl).length;
+  const linkedProjectCount = TOOLS.filter(tool => Boolean(tool.externalUrl)).length;
+  const upcomingCount = TOOLS.filter(tool => !tool.client && !tool.externalUrl).length;
 
   app.innerHTML = `
     <div class="mb-10 text-center">
       <h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight mb-4">
-        <span class="bg-gradient-to-r from-brand-600 to-cyan-500 bg-clip-text text-transparent">60+ инструментов</span>
+        <span class="bg-gradient-to-r from-brand-600 to-cyan-500 bg-clip-text text-transparent">${activeLocalCount} работающих инструментов</span>
       </h1>
       <p class="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
-        Браузерные конвертеры и полезные утилиты. Готовые инструменты работают на устройстве; функции в разработке отмечены «Скоро».
+        В каталоге ${TOOLS.length} карточек: ${activeLocalCount} локальных инструментов, ${linkedProjectCount} отдельных проектов и ${upcomingCount} функций со статусом «Скоро».
       </p>
     </div>
 
@@ -884,7 +888,7 @@ async function processClientConversion(tool, file) {
   try {
     if (['jpg-to-png', 'png-to-jpg', 'webp-to-png', 'png-to-webp', 'jpg-to-webp', 'bmp-to-jpg', 'gif-to-png', 'svg-to-png', 'ico-to-png', 'png-to-ico', 'image-resizer', 'image-compressor', 'image-to-base64'].includes(tool.id)) {
       if (file.size > 25 * 1024 * 1024) throw new Error('Файл изображения превышает 25 МБ.');
-      const img = await loadImage(file);
+      const img = await loadImageForTool(file, tool);
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
 
@@ -924,10 +928,28 @@ async function processClientConversion(tool, file) {
       }
       if (tool.id === 'image-to-base64') {
         const dataUrl = canvas.toDataURL(mime, quality);
-        result.innerHTML = `
-          <p class="text-sm mb-2">Base64:</p>
-          <textarea class="w-full h-32 p-2 text-xs font-mono rounded border dark:bg-slate-900" readonly>${dataUrl}</textarea>
-          <button onclick="navigator.clipboard.writeText(this.previousElementSibling.value)" class="mt-2 px-4 py-2 bg-brand-600 text-white rounded-lg text-sm">Копировать</button>`;
+        const label = document.createElement('p');
+        label.className = 'text-sm mb-2';
+        label.textContent = 'Base64:';
+        const textarea = document.createElement('textarea');
+        textarea.className = 'w-full h-32 p-2 text-xs font-mono rounded border dark:bg-slate-900';
+        textarea.readOnly = true;
+        textarea.value = dataUrl;
+        const copyButton = document.createElement('button');
+        copyButton.type = 'button';
+        copyButton.className = 'mt-2 px-4 py-2 bg-brand-600 text-white rounded-lg text-sm';
+        copyButton.textContent = 'Копировать';
+        copyButton.addEventListener('click', async () => {
+          try {
+            await navigator.clipboard.writeText(textarea.value);
+            copyButton.textContent = 'Скопировано';
+          } catch (_) {
+            textarea.focus();
+            textarea.select();
+            copyButton.textContent = 'Выделите текст и скопируйте вручную';
+          }
+        });
+        result.replaceChildren(label, textarea, copyButton);
         return;
       }
 
@@ -977,14 +999,34 @@ async function processClientConversion(tool, file) {
         return;
       }
 
-      const dataUrl = canvas.toDataURL(mime, quality);
-      result.innerHTML = `
-        <div class="text-center">
-          <img src="${dataUrl}" class="max-w-full max-h-64 mx-auto rounded-xl shadow mb-4" alt="Результат конвертации" />
-          <a href="${dataUrl}" download="converted.${ext}" class="inline-flex items-center gap-2 px-6 py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-semibold">
-            <i class="fas fa-download"></i> Скачать ${ext.toUpperCase()}
-          </a>
-        </div>`;
+      const outputBlob = await new Promise((resolve, reject) => {
+        if (!canvas.toBlob) return reject(new Error('Браузер не поддерживает безопасное создание файла.'));
+        canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Не удалось создать файл изображения.')), mime, quality);
+      });
+      const outputUrl = URL.createObjectURL(outputBlob);
+      const preview = document.createElement('img');
+      preview.src = outputUrl;
+      preview.alt = 'Результат конвертации';
+      preview.className = 'max-w-full max-h-64 mx-auto rounded-xl shadow mb-4';
+      const download = document.createElement('a');
+      download.href = outputUrl;
+      download.download = 'converted.' + ext;
+      download.className = 'inline-flex items-center gap-2 px-6 py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-semibold';
+      const icon = document.createElement('i');
+      icon.className = 'fas fa-download';
+      download.append(icon, document.createTextNode(' Скачать ' + ext.toUpperCase()));
+      download.addEventListener('click', () => setTimeout(() => URL.revokeObjectURL(outputUrl), 30000), { once: true });
+      setTimeout(() => URL.revokeObjectURL(outputUrl), 10 * 60 * 1000);
+      const outputWrap = document.createElement('div');
+      outputWrap.className = 'text-center';
+      outputWrap.append(preview, download);
+      result.replaceChildren(outputWrap);
+      if (tool.id === 'image-compressor' && outputBlob.size >= file.size) {
+        const note = document.createElement('p');
+        note.className = 'mt-3 text-xs text-slate-500';
+        note.textContent = 'После перекодирования файл не стал меньше исходного. Для этого изображения сжатие не дало выигрыша.';
+        outputWrap.append(note);
+      }
     } else if (tool.id === 'base64-to-image') {
       // handled differently, but for file it's text
       result.innerHTML = `<p class="text-slate-500">Загрузите текстовый файл с Base64 или используйте текстовый инструмент</p>`;
@@ -1056,6 +1098,43 @@ function loadImage(file) {
     };
     img.src = objectUrl;
   });
+}
+
+async function loadImageForTool(file, tool) {
+  if (tool.id !== 'svg-to-png') return loadImage(file);
+  const source = await file.text();
+  if (/<!DOCTYPE|<!ENTITY/i.test(source)) throw new Error('SVG с DTD/ENTITY не поддерживается.');
+  const documentXml = new DOMParser().parseFromString(source, 'image/svg+xml');
+  const root = documentXml.documentElement;
+  if (!root || root.localName !== 'svg' || documentXml.querySelector('parsererror')) {
+    throw new Error('Некорректный SVG-файл.');
+  }
+  if (documentXml.querySelector('script,foreignObject,iframe,object,embed,animate,animateTransform,set,audio,video,link')) {
+    throw new Error('SVG содержит активные или неподдерживаемые элементы.');
+  }
+  const checkCss = value => {
+    if (/@import/i.test(value)) throw new Error('Внешние CSS-импорты в SVG запрещены.');
+    const urls = value.matchAll(/url\(\s*(['"]?)(.*?)\1\s*\)/gi);
+    for (const match of urls) {
+      if (!match[2].trim().startsWith('#')) {
+        throw new Error('Внешние ресурсы внутри SVG запрещены.');
+      }
+    }
+  };
+  for (const element of documentXml.querySelectorAll('*')) {
+    for (const attribute of [...element.attributes]) {
+      const name = attribute.name.toLowerCase();
+      const value = attribute.value.trim();
+      if (name.startsWith('on')) throw new Error('Обработчики событий в SVG запрещены.');
+      if ((name === 'href' || name.endsWith(':href')) && value && !value.startsWith('#')) {
+        throw new Error('Внешние ссылки и встроенные ресурсы в SVG запрещены.');
+      }
+      checkCss(value);
+    }
+    if (element.localName === 'style') checkCss(element.textContent || '');
+  }
+  const safeSvg = new Blob([new XMLSerializer().serializeToString(documentXml)], { type: 'image/svg+xml' });
+  return loadImage(safeSvg);
 }
 
 function escapeHtml(text) {
