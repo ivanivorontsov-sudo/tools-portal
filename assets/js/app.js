@@ -232,7 +232,7 @@ function getAccept(tool) {
     'png-to-ico': 'image/png',
     'image-to-base64': 'image/*',
     'image-resizer': 'image/*',
-    'image-compressor': 'image/*',
+    'image-compressor': 'image/jpeg,image/png,image/webp',
     'jpg-to-pdf': 'image/*',
     'favicon-generator': 'image/*',
     'audio-to-base64': 'audio/*',
@@ -883,6 +883,7 @@ async function processClientConversion(tool, file) {
 
   try {
     if (['jpg-to-png', 'png-to-jpg', 'webp-to-png', 'png-to-webp', 'jpg-to-webp', 'bmp-to-jpg', 'gif-to-png', 'svg-to-png', 'ico-to-png', 'png-to-ico', 'image-resizer', 'image-compressor', 'image-to-base64'].includes(tool.id)) {
+      if (file.size > 25 * 1024 * 1024) throw new Error('Файл изображения превышает 25 МБ.');
       const img = await loadImage(file);
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
@@ -901,6 +902,9 @@ async function processClientConversion(tool, file) {
 
       if (tool.id === 'png-to-jpg' || tool.id === 'bmp-to-jpg') { mime = 'image/jpeg'; ext = 'jpg'; }
       if (tool.id === 'png-to-webp' || tool.id === 'jpg-to-webp') { mime = 'image/webp'; ext = 'webp'; }
+      if (mime !== 'image/jpeg') {
+        ctx.drawImage(img, 0, 0, w, h);
+      }
       if (tool.id === 'image-compressor') {
         const allowedImageTypes = {
           'image/jpeg': { mime: 'image/jpeg', ext: 'jpg' },
