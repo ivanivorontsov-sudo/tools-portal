@@ -11,6 +11,20 @@
     [x-cloak] { display: none !important; }
     .tool-card:hover { transform: translateY(-4px); }
     .dropzone.dragover { border-color: #0ea5e9; background-color: rgba(14, 165, 233, 0.05); }
+    html { scroll-behavior: smooth; }
+    .category-quicknav, .category-page-nav { position: sticky; top: 4rem; z-index: 35; background: rgba(248,250,252,.94); border: 1px solid rgba(148,163,184,.35); border-radius: 1rem; padding: .65rem; backdrop-filter: blur(14px); }
+    .dark .category-quicknav, .dark .category-page-nav { background: rgba(15,23,42,.94); border-color: rgba(71,85,105,.65); }
+    .category-quicknav-inner { display:flex; align-items:center; flex-wrap:wrap; justify-content:center; gap:.45rem; }
+    .category-quicknav-label { font-size:.78rem; font-weight:700; color:#64748b; padding:0 .45rem; }
+    .category-jump-button { display:inline-flex; align-items:center; gap:.45rem; border:1px solid #cbd5e1; border-radius:999px; padding:.5rem .75rem; font-size:.82rem; font-weight:650; color:#334155; background:#fff; transition:background .15s,border-color .15s; }
+    .category-jump-button:hover { background:#e0f2fe; border-color:#38bdf8; }
+    .dark .category-jump-button { color:#e2e8f0; background:#1e293b; border-color:#475569; }
+    .dark .category-jump-button:hover { background:#0c4a6e; border-color:#0ea5e9; }
+    .category-jump-count { opacity:.65; font-variant-numeric:tabular-nums; }
+    .tool-category-section { scroll-margin-top: 10rem; }
+    .category-page-nav { position:relative; top:auto; }
+    @media (max-width:640px) { .category-quicknav-inner { justify-content:flex-start; overflow-x:auto; flex-wrap:nowrap; } .category-jump-button { white-space:nowrap; } }
+    @media (prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }
   </style>
 <meta name="robots" content="index,follow,max-image-preview:large">
 <link rel="canonical" href="https://ivanivorontsov-sudo.github.io/tools-portal/">
