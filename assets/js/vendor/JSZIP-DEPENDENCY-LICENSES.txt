@@ -1,0 +1,81 @@
+JSZip 3.10.2 browser-bundle dependency notices
+================================================
+
+The version list below follows the upstream JSZip 3.10.2 package manifest and lock file:
+https://github.com/Stuk/jszip/blob/v3.10.2/package.json
+https://github.com/Stuk/jszip/blob/v3.10.2/package-lock.json
+
+The bundle includes or references these dependency modules:
+
+* lie 3.3.0 — MIT. Copyright (c) 2014-2018 Calvin Metcalf and Jordan Harband.
+* immediate 3.0.6 — MIT. Copyright (c) 2012 Barnesandnoble.com, llc, Donavon West, Domenic Denicola, Brian Cavalier.
+* readable-stream 2.3.6 — MIT. Copyright Node.js contributors; also contains code originating from the Joyent Node repository, Copyright Joyent, Inc. and other Node contributors.
+* setimmediate 1.0.5 — MIT. Copyright (c) 2012 Barnesandnoble.com, llc, Donavon West, and Domenic Denicola.
+* core-util-is 1.0.2 — MIT. Copyright Node.js contributors.
+* inherits 2.0.3 — ISC. Copyright (c) Isaac Z. Schlueter.
+* isarray 1.0.0 — MIT. Copyright (c) 2013 Julian Gruber.
+* process-nextick-args 2.0.0 — MIT. Copyright (c) 2015 Calvin Metcalf.
+* safe-buffer 5.1.1 — MIT. Copyright (c) Feross Aboukhadijeh.
+* string_decoder 1.1.1 — MIT. Copyright Node.js contributors; also contains code originating from the Joyent Node repository, Copyright Joyent, Inc. and other Node contributors.
+* util-deprecate 1.0.2 — MIT. Copyright (c) 2014 Nathan Rajlich.
+
+Pako 1.0.5 is also bundled in the JSZip distribution. Its complete license text and notice are in PAKO-LICENSE.txt.
+
+MIT LICENSE
+-----------
+
+The copyright notices above apply to the respective MIT-licensed modules listed above. The following MIT license terms are reproduced for those modules:
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+IN THE SOFTWARE.
+
+ISC LICENSE
+-----------
+
+The following ISC license applies to inherits 2.0.3:
+
+The ISC License
+
+Copyright (c) Isaac Z. Schlueter
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
+FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.
+
+Upstream package references
+---------------------------
+
+* lie: https://www.npmjs.com/package/lie
+* immediate: https://github.com/calvinmetcalf/immediate
+* readable-stream: https://github.com/nodejs/readable-stream/tree/v2.3.6
+* setimmediate: https://github.com/YuzuJS/setImmediate
+* core-util-is: https://github.com/isaacs/core-util-is
+* inherits: https://github.com/isaacs/inherits/tree/v2.0.3
+* isarray: https://github.com/juliangruber/isarray
+* process-nextick-args: https://github.com/calvinmetcalf/process-nextick-args
+* safe-buffer: https://github.com/feross/safe-buffer/tree/v5.1.1
+* string_decoder: https://github.com/nodejs/string_decoder/tree/v1.1.1
+* util-deprecate: https://github.com/TooTallNate/util-deprecate
