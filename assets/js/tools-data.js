@@ -14,7 +14,7 @@ const TOOLS = [
   { id: "avif-to-jpg", name: "AVIF → JPG", category: "image", icon: "fa-image", desc: "Конвертация AVIF в JPG", client: false },
   { id: "png-to-ico", name: "PNG → ICO", category: "image", icon: "fa-icons", desc: "Создание ICO из PNG", client: true },
   { id: "image-to-base64", name: "Image → Base64", category: "image", icon: "fa-code", desc: "Кодирование изображения в Base64", client: true },
-  { id: "base64-to-image", name: "Base64 → Image", category: "image", icon: "fa-code", desc: "Декодирование Base64 в изображение", client: true },
+  { id: "base64-to-image", name: "Base64 → Image", category: "image", icon: "fa-code", desc: "Декодирование Base64 в изображение", client: false },
   { id: "image-resizer", name: "Изменение размера", category: "image", icon: "fa-expand", desc: "Изменение размера изображения", client: true },
 
   // === Video (10) ===
@@ -39,16 +39,16 @@ const TOOLS = [
   { id: "wma-to-mp3", name: "WMA → MP3", category: "audio", icon: "fa-music", desc: "Конвертация WMA в MP3", client: false },
   { id: "aiff-to-mp3", name: "AIFF → MP3", category: "audio", icon: "fa-music", desc: "Конвертация AIFF в MP3", client: false },
   { id: "mp3-to-ogg", name: "MP3 → OGG", category: "audio", icon: "fa-music", desc: "Конвертация MP3 в OGG", client: false },
-  { id: "audio-to-base64", name: "Audio → Base64", category: "audio", icon: "fa-code", desc: "Кодирование аудио в Base64", client: true },
+  { id: "audio-to-base64", name: "Audio → Base64", category: "audio", icon: "fa-code", desc: "Кодирование аудио в Base64", client: false },
 
   // === Documents (10) ===
   { id: "pdf-master", name: "PDF Мастер", category: "document", icon: "fa-file-pdf", desc: "Объединение, сортировка, поворот и извлечение страниц PDF — в браузере без регистрации и подписки", client: true, externalUrl: "https://ivanivorontsov-sudo.github.io/pdf-master/" },
   { id: "pdf-to-docx", name: "PDF → DOCX", category: "document", icon: "fa-file-pdf", desc: "Конвертация PDF в Word", client: false },
   { id: "docx-to-pdf", name: "DOCX → PDF", category: "document", icon: "fa-file-word", desc: "Конвертация Word в PDF", client: false },
   { id: "pdf-to-txt", name: "PDF → TXT", category: "document", icon: "fa-file-alt", desc: "Извлечение текста из PDF", client: false },
-  { id: "txt-to-pdf", name: "TXT → PDF", category: "document", icon: "fa-file-alt", desc: "Создание PDF из текста", client: true },
+  { id: "txt-to-pdf", name: "TXT → PDF", category: "document", icon: "fa-file-alt", desc: "Создание PDF из текста", client: false },
   { id: "pdf-to-jpg", name: "PDF → JPG", category: "document", icon: "fa-file-image", desc: "Конвертация страниц PDF в JPG", client: false },
-  { id: "jpg-to-pdf", name: "JPG → PDF", category: "document", icon: "fa-file-pdf", desc: "Создание PDF из изображений", client: true },
+  { id: "jpg-to-pdf", name: "JPG → PDF", category: "document", icon: "fa-file-pdf", desc: "Создание PDF из изображений", client: false },
   { id: "html-to-pdf", name: "HTML → PDF", category: "document", icon: "fa-file-code", desc: "Конвертация HTML в PDF", client: false },
   { id: "markdown-to-html", name: "Markdown → HTML", category: "document", icon: "fa-markdown", desc: "Конвертация Markdown в HTML", client: true },
   { id: "csv-to-json", name: "CSV → JSON", category: "document", icon: "fa-file-csv", desc: "Конвертация CSV в JSON", client: true },
@@ -70,7 +70,7 @@ const TOOLS = [
   { id: "case-converter", name: "Регистр текста", category: "utility", icon: "fa-font", desc: "UPPER, lower, Title, camelCase и др.", client: true },
   { id: "word-counter", name: "Счётчик слов", category: "utility", icon: "fa-calculator", desc: "Подсчёт слов, символов, предложений", client: true },
   { id: "uuid-generator", name: "Генератор UUID", category: "utility", icon: "fa-fingerprint", desc: "Генерация UUID v4", client: true },
-  { id: "favicon-generator", name: "Генератор Favicon", category: "utility", icon: "fa-star", desc: "Создание favicon из изображения", client: true },
+  { id: "favicon-generator", name: "Генератор Favicon", category: "utility", icon: "fa-star", desc: "Создание favicon из изображения", client: false },
   { id: "timestamp-converter", name: "Unix Timestamp", category: "utility", icon: "fa-clock", desc: "Конвертация Unix timestamp ↔ дата", client: true },
   { id: "regex-tester", name: "Тестер Regex", category: "utility", icon: "fa-search", desc: "Тестирование регулярных выражений", client: true },
   { id: "daily-workshop", name: "Ежедневная мастерская", category: "utility", icon: "fa-toolbox", desc: "11 локальных инструментов для текста, файлов, фото, CSV, Markdown и URL", client: true, externalUrl: "https://ivanivorontsov-sudo.github.io/daily-tools/" },
