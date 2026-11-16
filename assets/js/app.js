@@ -364,14 +364,33 @@ function initToolLogic(tool) {
     function handleFile(file) {
       selectedFile = file;
       document.getElementById('file-info').classList.remove('hidden');
-      document.getElementById('file-info').innerHTML = `
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="font-medium">${file.name}</p>
-            <p class="text-sm text-slate-500">${(file.size / 1024).toFixed(1)} KB · ${file.type || 'unknown'}</p>
-          </div>
-          <button onclick="document.getElementById('file-info').classList.add('hidden'); selectedFile=null; document.getElementById('convert-btn').disabled=true;" class="text-red-500"><i class="fas fa-times"></i></button>
-        </div>`;
+      const info = document.getElementById('file-info');
+      info.replaceChildren();
+      const row = document.createElement('div');
+      row.className = 'flex items-center justify-between';
+      const details = document.createElement('div');
+      const name = document.createElement('p');
+      name.className = 'font-medium';
+      name.textContent = file.name;
+      const meta = document.createElement('p');
+      meta.className = 'text-sm text-slate-500';
+      meta.textContent = `${(file.size / 1024).toFixed(1)} KB · ${file.type || 'unknown'}`;
+      details.append(name, meta);
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.className = 'text-red-500';
+      remove.setAttribute('aria-label', 'Убрать выбранный файл');
+      const removeIcon = document.createElement('i');
+      removeIcon.className = 'fas fa-times';
+      remove.append(removeIcon);
+      remove.addEventListener('click', () => {
+        info.classList.add('hidden');
+        info.replaceChildren();
+        selectedFile = null;
+        convertBtn.disabled = true;
+      });
+      row.append(details, remove);
+      info.append(row);
       convertBtn.disabled = false;
     }
 
@@ -559,7 +578,19 @@ function initToolLogic(tool) {
         const matches = [...text.matchAll(re)];
         const res = document.getElementById('regex-result');
         res.classList.remove('hidden');
-        res.innerHTML = matches.length ? `Найдено: ${matches.length}<br>` + matches.map(m => m[0]).join('<br>') : 'Совпадений нет';
+        res.replaceChildren();
+        if (!matches.length) {
+          res.textContent = 'Совпадений нет';
+        } else {
+          const summary = document.createElement('p');
+          summary.textContent = `Найдено: ${matches.length}`;
+          res.append(summary);
+          for (const match of matches) {
+            const line = document.createElement('div');
+            line.textContent = match[0];
+            res.append(line);
+          }
+        }
       } catch (e) {
         document.getElementById('regex-result').classList.remove('hidden');
         document.getElementById('regex-result').textContent = 'Ошибка: ' + e.message;
@@ -666,7 +697,17 @@ async function processClientConversion(tool, file) {
 
       if (tool.id.includes('jpg') || tool.id === 'bmp-to-jpg') { mime = 'image/jpeg'; ext = 'jpg'; }
       if (tool.id.includes('webp')) { mime = 'image/webp'; ext = 'webp'; }
-      if (tool.id === 'image-compressor') { mime = file.type || 'image/jpeg'; quality = 0.7; ext = file.name.split('.').pop(); }
+      if (tool.id === 'image-compressor') {
+        const allowedImageTypes = {
+          'image/jpeg': { mime: 'image/jpeg', ext: 'jpg' },
+          'image/png': { mime: 'image/png', ext: 'png' },
+          'image/webp': { mime: 'image/webp', ext: 'webp' }
+        };
+        const imageType = allowedImageTypes[file.type] || allowedImageTypes['image/jpeg'];
+        mime = imageType.mime;
+        ext = imageType.ext;
+        quality = 0.7;
+      }
       if (tool.id === 'image-to-base64') {
         const dataUrl = canvas.toDataURL(mime, quality);
         result.innerHTML = `
@@ -715,14 +756,30 @@ async function processClientConversion(tool, file) {
           .replace(/\*(.*)\*/gim, '<i>$1</i>')
           .replace(/\n/g, '<br>');
       }
-      result.innerHTML = `
-        <pre class="p-4 bg-slate-100 dark:bg-slate-900 rounded-xl overflow-auto text-sm max-h-96">${escapeHtml(out)}</pre>
-        <button onclick="navigator.clipboard.writeText(\`${out.replace(/`/g, '\\`')}\`)" class="mt-3 px-4 py-2 bg-brand-600 text-white rounded-lg text-sm">Копировать</button>`;
+      const preview = document.createElement('pre');
+      preview.className = 'p-4 bg-slate-100 dark:bg-slate-900 rounded-xl overflow-auto text-sm max-h-96';
+      preview.textContent = out;
+      const copyButton = document.createElement('button');
+      copyButton.type = 'button';
+      copyButton.className = 'mt-3 px-4 py-2 bg-brand-600 text-white rounded-lg text-sm';
+      copyButton.textContent = 'Копировать';
+      copyButton.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(out);
+          copyButton.textContent = 'Скопировано';
+        } catch {
+          copyButton.textContent = 'Не удалось скопировать';
+        }
+      });
+      result.replaceChildren(preview, copyButton);
     } else {
       result.innerHTML = `<div class="p-4 bg-green-50 dark:bg-green-900/20 rounded-xl">Файл обработан (демо). Полная реализация скоро.</div>`;
     }
   } catch (e) {
-    result.innerHTML = `<div class="p-4 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 rounded-xl">Ошибка: ${e.message}</div>`;
+    const errorBox = document.createElement('div');
+    errorBox.className = 'p-4 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 rounded-xl';
+    errorBox.textContent = 'Ошибка: ' + (e && e.message ? e.message : String(e));
+    result.replaceChildren(errorBox);
   }
 }
 
@@ -736,7 +793,9 @@ function loadImage(file) {
 }
 
 function escapeHtml(text) {
-  return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return String(text).replace(/[&<>"']/g, char => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[char]));
 }
 
 // Main render
