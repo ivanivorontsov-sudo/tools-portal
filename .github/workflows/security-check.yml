@@ -15,6 +15,7 @@ on:
       - "desktop-bundles/linux/**"
       - "desktop-bundles/windows/**"
       - "scripts/**"
+      - "categories/**"
       - ".github/workflows/security-check.yml"
   pull_request:
     branches: [main]
@@ -49,15 +50,24 @@ jobs:
           node --check pdf-master/app.mjs
       - name: Check Linux installer syntax
         run: bash -n desktop-bundles/linux/install-ivan-tools.sh
-      - name: Install Playwright Chromium
+      - name: Install Playwright and build production CSS
         run: |
           npm install --no-save playwright tailwindcss@3.4.19
           npx tailwindcss -c tailwind.config.cjs -i assets/css/tailwind.input.css -o /tmp/tailwind.min.css --minify
+          npx playwright install --with-deps chromium
+      - name: Upload generated CSS for verification
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-tailwind-css
+          path: /tmp/tailwind.min.css
+          if-no-files-found: error
+          retention-days: 1
+      - name: Verify tracked production CSS
+        run: |
           cmp --silent assets/css/tailwind.min.css /tmp/tailwind.min.css || {
             echo "Production CSS is out of date. Rebuild it using the command in README.md and commit assets/css/tailwind.min.css."
             exit 1
           }
-          npx playwright install --with-deps chromium
       - name: Browser smoke tests for active tools
         run: |
           set -Eeuo pipefail
