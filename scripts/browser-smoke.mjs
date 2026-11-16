@@ -284,6 +284,27 @@ const csvText = await page.locator("#result pre").innerText();
 if (!csvText.includes('"hello, ""world"""') || !csvText.includes("extra")) errors.push("json-to-csv: fields with commas/quotes or later-object keys were lost");
 record("CSV round-trip");
 
+// PDF.js core API must render documents without executing embedded PDF JavaScript.
+await page.goto(BASE + "/pdf-master/", { waitUntil: "domcontentloaded" });
+await page.waitForFunction(() => Boolean(window.PDFLib), null, { timeout: 15000 });
+const scriptedPdf = await page.evaluate(async () => {
+  const doc = await window.PDFLib.PDFDocument.create();
+  doc.addPage();
+  doc.addJavaScript("security-smoke", "window.__pdfEmbeddedScriptRan = true;");
+  return Array.from(await doc.save());
+});
+await page.locator("#files").setInputFiles({
+  name: "scripted-test.pdf",
+  mimeType: "application/pdf",
+  buffer: Buffer.from(scriptedPdf)
+});
+await page.waitForFunction(() => document.querySelector("#page-count")?.textContent.includes("1"), null, { timeout: 15000 })
+  .catch(() => errors.push("pdf-master: test PDF did not load"));
+if (await page.evaluate(() => Boolean(window.__pdfEmbeddedScriptRan))) {
+  errors.push("pdf-master: embedded JavaScript executed");
+}
+record("PDF embedded-script protection");
+
 await browser.close();
 console.log("Tools Portal: " + active.length + " active tools opened.");
 console.log("Image conversions tested: " + imageTests.length + ".");
