@@ -81,13 +81,19 @@ for (const id of imageTests) {
   await page.locator("#convert-btn").click();
   await page.waitForFunction(() => {
     const result = document.querySelector("#result");
-    return result && !result.classList.contains("hidden") && result.childNodes.length > 0;
-  }, null, { timeout: 10000 }).catch(() => errors.push(id + ": conversion produced no visible result"));
+    if (!result || result.classList.contains("hidden")) return false;
+    if (result.querySelector(".fa-spinner")) return false;
+    return Boolean(result.querySelector('a[download]') || result.querySelector("textarea[readonly]") || result.querySelector(".bg-red-50"));
+  }, null, { timeout: 10000 }).catch(() => errors.push(id + ": conversion did not finish with an output"));
   const output = await page.locator("#result").innerText().catch(() => "");
+  if (pageErrors.length) errors.push(id + ": " + pageErrors.join("; "));
+  if (await page.locator("#result .bg-red-50").count()) errors.push(id + ": conversion returned an error: " + output);
   if (id === "png-to-ico") {
     if (!(await page.locator('#result a[download="converted.ico"]').count())) errors.push(id + ": ICO file was not generated");
-  } else if (!output.trim()) {
-    errors.push(id + ": empty conversion result");
+  } else if (id === "image-to-base64") {
+    if (!(await page.locator("#result textarea[readonly]").count())) errors.push(id + ": Base64 image output is missing");
+  } else if (!(await page.locator("#result a[download]").count())) {
+    errors.push(id + ": downloadable converted image is missing");
   }
   record(id + " conversion");
 }
