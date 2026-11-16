@@ -222,6 +222,7 @@ const textTests = [
     await page.locator("#regex-pattern").fill("\\d+");
     await page.locator("#regex-text").fill("audit123");
     await page.locator("#regex-test").click();
+    await page.waitForFunction(() => document.querySelector("#regex-result")?.innerText.includes("123"), null, { timeout: 5000 });
     if (!(await page.locator("#regex-result").innerText()).includes("123")) errors.push("regex-tester: match result missing");
   }]
 ];
@@ -230,6 +231,39 @@ for (const [id, test] of textTests) {
   try { await test(); } catch (error) { errors.push(id + ": interaction failed: " + error.message); }
   record(id + " interaction");
 }
+
+// Verify mobile search survives its own re-render after each keystroke.
+await page.setViewportSize({ width: 390, height: 844 });
+await page.goto(BASE + "/", { waitUntil: "domcontentloaded" });
+await page.locator("#mobile-search-input").fill("QR");
+await page.waitForFunction(() => document.activeElement?.id === "mobile-search-input" && window._search === "QR");
+if (!(await page.locator("#app").innerText()).includes("QR")) errors.push("mobile-search: filtering did not update the catalog");
+record("mobile search");
+await page.setViewportSize({ width: 1280, height: 900 });
+
+// CSV with quoted commas, embedded newlines and escaped quotes must round-trip safely.
+await openTool("csv-to-json");
+await page.locator("#file-input").setInputFiles({
+  name: "quoted.csv",
+  mimeType: "text/csv",
+  buffer: Buffer.from('name,note\r\nAlice,"hello, world"\r\nBob,"line one\nline two"\r\n')
+});
+await page.locator("#convert-btn").click();
+await page.waitForFunction(() => document.querySelector("#result pre")?.textContent.includes("hello, world"));
+const csvJson = await page.locator("#result pre").innerText();
+if (!csvJson.includes("line two")) errors.push("csv-to-json: quoted multiline field was not parsed");
+
+await openTool("json-to-csv");
+await page.locator("#file-input").setInputFiles({
+  name: "records.json",
+  mimeType: "application/json",
+  buffer: Buffer.from('[{"name":"Alice","note":"hello, \\"world\\""},{"name":"Bob","extra":"x"}]')
+});
+await page.locator("#convert-btn").click();
+await page.waitForFunction(() => document.querySelector("#result pre")?.textContent.includes("extra"));
+const csvText = await page.locator("#result pre").innerText();
+if (!csvText.includes('"hello, ""world"""') || !csvText.includes("extra")) errors.push("json-to-csv: fields with commas/quotes or later-object keys were lost");
+record("CSV round-trip");
 
 await browser.close();
 console.log("Tools Portal: " + active.length + " active tools opened.");
