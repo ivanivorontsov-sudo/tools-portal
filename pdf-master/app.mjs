@@ -7,16 +7,19 @@ window.pdfjsLib = pdfjsLib;
 (() => {
   "use strict";
   const $ = (id) => document.getElementById(id);
+  const MAX_TOTAL_BYTES = 100 * 1024 * 1024;
+  const MAX_TOTAL_PAGES = 300;
   const state = { files: [], pages: [], nextId: 1, renderToken: 0, busy: false };
   const fmt = new Intl.NumberFormat("ru-RU", {maximumFractionDigits:1});
   const bytesText = n => n < 1024*1024 ? fmt.format(n/1024)+" КБ" : fmt.format(n/1024/1024)+" МБ";
 
-  const savedTheme = localStorage.getItem("pdf-master-theme");
+  let savedTheme = null;
+  try { savedTheme = localStorage.getItem("pdf-master-theme"); } catch (_) {}
   if (savedTheme === "dark" || savedTheme === "light") document.documentElement.dataset.theme = savedTheme;
   $("theme").addEventListener("click", () => {
     const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
     document.documentElement.dataset.theme = next;
-    localStorage.setItem("pdf-master-theme", next);
+    try { localStorage.setItem("pdf-master-theme", next); } catch (_) {}
   });
 
   function status(message, kind = "") {
@@ -208,9 +211,16 @@ window.pdfjsLib = pdfjsLib;
     try {
       for (const file of files) {
         try {
-          if (file.size > 250*1024*1024) throw new Error("файл больше 250 МБ — браузеру может не хватить памяти");
+          const currentBytes = state.files.reduce((sum, item) => sum + item.size, 0);
+          if (currentBytes + file.size > MAX_TOTAL_BYTES) {
+            throw new Error("общий объём выбранных документов превысит 100 МБ; удалите часть файлов или выберите меньшие документы");
+          }
           const buffer = await file.arrayBuffer();
           const sourceDoc = await PDFLib.PDFDocument.load(buffer.slice(0), {updateMetadata:false});
+          const pageCount = sourceDoc.getPageCount();
+          if (state.pages.length + pageCount > MAX_TOTAL_PAGES) {
+            throw new Error("в рабочем списке может быть не более 300 страниц; удалите часть страниц или документов");
+          }
           const pdfjs = await pdfjsLib.getDocument({
             data:new Uint8Array(buffer.slice(0)),
             cMapUrl:"https://cdn.jsdelivr.net/npm/pdfjs-dist@6.5.438/cmaps/",
@@ -219,7 +229,7 @@ window.pdfjsLib = pdfjsLib;
             wasmUrl:"https://cdn.jsdelivr.net/npm/pdfjs-dist@6.5.438/wasm/"
           }).promise;
           const fileId=state.nextId++;
-          const source={id:fileId,name:file.name,size:file.size,pageCount:sourceDoc.getPageCount(),sourceDoc,pdfjs};
+          const source={id:fileId,name:file.name,size:file.size,pageCount,sourceDoc,pdfjs};
           state.files.push(source);
           for(let i=0;i<source.pageCount;i++){
             const p=await pdfjs.getPage(i+1);
