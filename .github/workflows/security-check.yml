@@ -21,6 +21,7 @@ on:
     branches: [main]
     paths:
       - "scripts/**"
+      - "categories/**"
       - "assets/site-support.css"
       - "assets/site-support.js"
       - "privacy.html"
@@ -55,25 +56,12 @@ jobs:
           npm install --no-save playwright tailwindcss@3.4.19
           npx tailwindcss -c tailwind.config.cjs -i assets/css/tailwind.input.css -o /tmp/tailwind.min.css --minify
           npx playwright install --with-deps chromium
-      - name: Upload generated CSS for verification
-        uses: actions/upload-artifact@v4
-        with:
-          name: generated-tailwind-css
-          path: /tmp/tailwind.min.css
-          if-no-files-found: error
-          retention-days: 1
       - name: Verify tracked production CSS
         run: |
           cmp --silent assets/css/tailwind.min.css /tmp/tailwind.min.css || {
             echo "Production CSS is out of date. Rebuild it using the command in README.md and commit assets/css/tailwind.min.css."
             exit 1
           }
-      - name: Export generated CSS to diagnostic log
-        if: failure()
-        run: |
-          echo "CSS_B64_BEGIN"
-          base64 -w0 /tmp/tailwind.min.css | fold -w 6000
-          echo "CSS_B64_END"
       - name: Browser smoke tests for active tools
         run: |
           set -Eeuo pipefail
