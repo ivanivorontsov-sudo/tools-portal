@@ -68,6 +68,12 @@ jobs:
             echo "Production CSS is out of date. Rebuild it using the command in README.md and commit assets/css/tailwind.min.css."
             exit 1
           }
+      - name: Export generated CSS to diagnostic log
+        if: failure()
+        run: |
+          echo "CSS_B64_BEGIN"
+          base64 -w0 /tmp/tailwind.min.css | fold -w 6000
+          echo "CSS_B64_END"
       - name: Browser smoke tests for active tools
         run: |
           set -Eeuo pipefail
