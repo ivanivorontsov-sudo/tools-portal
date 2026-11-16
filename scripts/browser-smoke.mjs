@@ -98,6 +98,65 @@ for (const id of imageTests) {
   record(id + " conversion");
 }
 
+// ZIP tools: create a real archive, inspect it, and download an extracted file.
+let zipScenarios = 0;
+try {
+  await openTool("zip-create");
+  await page.locator("#zip-create-files").setInputFiles([
+    { name: "first.txt", mimeType: "text/plain", buffer: Buffer.from("alpha") },
+    { name: "second.txt", mimeType: "text/plain", buffer: Buffer.from("beta") }
+  ]);
+  await page.locator("#zip-create-name").fill("audit-bundle.zip");
+  await page.locator("#zip-create-run").click();
+  await page.waitForSelector("#zip-create-status a[download]", { timeout: 15000 });
+  const createDownloadPromise = page.waitForEvent("download", { timeout: 10000 });
+  await page.locator("#zip-create-status a[download]").click();
+  const createdDownload = await createDownloadPromise;
+  if (createdDownload.suggestedFilename() !== "audit-bundle.zip") errors.push("zip-create: wrong download name");
+  const createdBytes = fs.readFileSync(await createdDownload.path());
+  const createdContent = await page.evaluate(async bytes => {
+    const archive = await window.JSZip.loadAsync(new Uint8Array(bytes));
+    return {
+      names: Object.keys(archive.files).filter(name => !archive.files[name].dir).sort(),
+      first: await archive.file("first.txt").async("string"),
+      second: await archive.file("second.txt").async("string")
+    };
+  }, [...createdBytes]);
+  if (createdContent.names.join(",") !== "first.txt,second.txt" || createdContent.first !== "alpha" || createdContent.second !== "beta") {
+    errors.push("zip-create: generated archive contents are incorrect");
+  }
+  zipScenarios++;
+
+  const fixture = await page.evaluate(async () => {
+    const archive = new window.JSZip();
+    archive.file("folder/hello.txt", "hello from zip");
+    archive.file("<img src=x onerror=alert(1)>.txt", "filename must be rendered as text");
+    return [...new Uint8Array(await archive.generateAsync({ type: "uint8array" }))];
+  });
+  await openTool("zip-extract");
+  await page.locator("#zip-extract-file").setInputFiles({
+    name: "fixture.zip",
+    mimeType: "application/zip",
+    buffer: Buffer.from(fixture)
+  });
+  await page.locator("#zip-extract-run").click();
+  await page.waitForSelector("#zip-extract-list button", { timeout: 10000 });
+  if (await page.locator("#zip-extract-list .font-medium").count() !== 2) errors.push("zip-extract: expected two file entries");
+  if (await page.locator("#zip-extract-list img").count() !== 0) errors.push("zip-extract: filename was interpreted as HTML");
+  const firstRow = page.locator("#zip-extract-list > div").filter({ hasText: "folder/hello.txt" }).first();
+  const extractDownloadPromise = page.waitForEvent("download", { timeout: 10000 });
+  await firstRow.locator("button").click();
+  const extractedDownload = await extractDownloadPromise;
+  if (!extractedDownload.suggestedFilename().includes("hello.txt")) errors.push("zip-extract: wrong extracted filename");
+  const extractedBytes = fs.readFileSync(await extractedDownload.path());
+  if (extractedBytes.toString("utf8") !== "hello from zip") errors.push("zip-extract: extracted bytes do not match source");
+  zipScenarios++;
+  record("ZIP tools");
+} catch (error) {
+  errors.push("ZIP tools interaction failed: " + error.message);
+  record("ZIP tools");
+}
+
 const textTests = [
   ["password-generator", async () => {
     await page.locator("#gen-pw").click();
@@ -175,6 +234,7 @@ for (const [id, test] of textTests) {
 await browser.close();
 console.log("Tools Portal: " + active.length + " active tools opened.");
 console.log("Image conversions tested: " + imageTests.length + ".");
+console.log("ZIP scenarios tested: " + zipScenarios + ".");
 console.log("Text tools exercised: " + textTests.length + ".");
 console.log("Errors: " + errors.length);
 for (const error of errors) console.error("ERROR:", error);
