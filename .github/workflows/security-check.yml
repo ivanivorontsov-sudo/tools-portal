@@ -4,6 +4,10 @@ on:
   push:
     branches: [main]
     paths:
+      - "assets/site-support.css"
+      - "assets/site-support.js"
+      - "privacy.html"
+      - "index.html"
       - "assets/js/**"
       - "pdf-master/**"
       - "desktop-bundles/linux/**"
@@ -12,6 +16,11 @@ on:
   pull_request:
     branches: [main]
     paths:
+      - "scripts/**"
+      - "assets/site-support.css"
+      - "assets/site-support.js"
+      - "privacy.html"
+      - "index.html"
       - "assets/js/**"
       - "pdf-master/**"
       - "desktop-bundles/linux/**"
