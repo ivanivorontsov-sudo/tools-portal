@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ru" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Утилиты — Портал инструментов</title>
+  <meta name="description" content="Генераторы, кодировщики, конвертеры, проверка регулярных выражений и ZIP. Каталог браузерных инструментов; статус каждой функции указан отдельно.">
+  <meta name="robots" content="index,follow">
+  <link rel="canonical" href="https://ivanivorontsov-sudo.github.io/tools-portal/categories/utility.html">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="ru_RU">
+  <meta property="og:site_name" content="Портал инструментов — проекты Ивана Воронцова">
+  <meta property="og:title" content="Утилиты — Портал инструментов">
+  <meta property="og:description" content="Генераторы, кодировщики, конвертеры, проверка регулярных выражений и ZIP.">
+  <meta property="og:url" content="https://ivanivorontsov-sudo.github.io/tools-portal/categories/utility.html">
+  <link rel="stylesheet" href="../assets/css/tailwind.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <style>
+    html { scroll-behavior:smooth; }
+    .tool-card:hover { transform:translateY(-4px); }
+    .category-page-nav { position:sticky; top:4rem; z-index:35; background:rgba(248,250,252,.94); border:1px solid rgba(148,163,184,.35); border-radius:1rem; padding:.65rem; backdrop-filter:blur(14px); }
+    .dark .category-page-nav { background:rgba(15,23,42,.94); border-color:rgba(71,85,105,.65); }
+    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+  </style>
+  <link rel="stylesheet" href="../assets/site-support.css">
+  <script src="../assets/site-support.js" defer></script>
+</head>
+<body class="h-full bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 transition-colors duration-200">
+  <header class="sticky top-0 z-50 bg-white/90 dark:bg-slate-900/90 backdrop-blur border-b border-slate-200 dark:border-slate-700">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16 gap-3">
+        <a href="../index.html" class="flex items-center gap-2 font-bold text-lg text-brand-600 dark:text-brand-500">
+          <i class="fas fa-tools" aria-hidden="true"></i><span>Портал инструментов</span>
+        </a>
+        <div class="flex-1 max-w-xl mx-3 hidden md:block">
+          <div class="relative">
+            <input id="search-input" type="search" placeholder="Поиск инструментов..." class="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm">
+            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" aria-hidden="true"></i>
+          </div>
+        </div>
+        <div class="flex items-center gap-3">
+          <button id="theme-toggle" type="button" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition" title="Сменить тему" aria-label="Сменить тему">
+            <i class="fas fa-moon dark:hidden" aria-hidden="true"></i><i class="fas fa-sun hidden dark:inline" aria-hidden="true"></i>
+          </button>
+          <a href="https://github.com/ivanivorontsov-sudo/tools-portal" target="_blank" rel="noopener noreferrer" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition" title="GitHub" aria-label="GitHub">
+            <i class="fab fa-github text-xl" aria-hidden="true"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
+  <main id="app" data-category="utility" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-[calc(100vh-8rem)]"></main>
+  <footer class="border-t border-slate-200 dark:border-slate-700 mt-12">
+    <div class="max-w-7xl mx-auto px-4 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
+      <p>© 2026 Портал инструментов · Обработка файлов в браузере там, где это реализовано</p>
+      <p class="mt-2"><a href="../index.html" class="text-brand-600 hover:underline">Все инструменты</a> · <a href="../privacy.html" class="text-brand-600 hover:underline">Политика конфиденциальности</a> · <a href="https://github.com/ivanivorontsov-sudo/tools-portal" class="text-brand-600 hover:underline">Исходный код</a></p>
+    </div>
+  </footer>
+  <script src="../assets/js/tools-data.js"></script>
+  <script src="../assets/js/vendor/qrcode-generator.js"></script>
+  <script src="../assets/js/vendor/jszip.min.js"></script>
+  <script src="../assets/js/app.js"></script>
+</body>
+</html>
