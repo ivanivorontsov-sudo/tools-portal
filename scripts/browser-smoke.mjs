@@ -34,7 +34,9 @@ function record(label) {
   pageErrors = [];
   localFailures = [];
 }
-async function openTool(tool) {
+async function openTool(toolOrId) {
+  const tool = typeof toolOrId === "string" ? tools.find(item => item.id === toolOrId) : toolOrId;
+  if (!tool) { errors.push(String(toolOrId) + ": tool definition missing"); return; }
   pageErrors = [];
   localFailures = [];
   await page.evaluate(id => { window.location.hash = "tool/" + id; }, tool.id);
