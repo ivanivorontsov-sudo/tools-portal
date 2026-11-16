@@ -55,7 +55,7 @@ const TOOLS = [
   { id: "json-to-csv", name: "JSON → CSV", category: "document", icon: "fa-file-code", desc: "Конвертация JSON в CSV", client: true },
 
   // === Utilities (15+) ===
-  { id: "image-compressor", name: "Сжатие изображений", category: "utility", icon: "fa-compress", desc: "Перекодирование JPG/PNG/WEBP для уменьшения размера; возможна потеря качества", client: true },
+  { id: "image-compressor", name: "Сжатие изображений", category: "utility", icon: "fa-compress", desc: "Перекодирование JPG/PNG/WEBP; размер файла может как уменьшиться, так и увеличиться", client: true },
   { id: "pdf-merger", name: "Объединение PDF", category: "utility", icon: "fa-object-group", desc: "Объединение нескольких PDF в один", client: false },
   { id: "pdf-splitter", name: "Разделение PDF", category: "utility", icon: "fa-cut", desc: "Разделение PDF на страницы", client: false },
   { id: "qr-generator", name: "Генератор QR-кодов", category: "utility", icon: "fa-qrcode", desc: "Создание QR-кодов из текста/URL", client: true },
