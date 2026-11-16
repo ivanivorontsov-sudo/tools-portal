@@ -1,0 +1,34 @@
+name: Security syntax checks
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "assets/js/**"
+      - "pdf-master/**"
+      - "desktop-bundles/linux/**"
+      - ".github/workflows/security-check.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "assets/js/**"
+      - "pdf-master/**"
+      - "desktop-bundles/linux/**"
+      - ".github/workflows/security-check.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+      - name: Check browser JavaScript
+        run: |
+          node --check assets/js/app.js
+          node --check assets/js/tools-data.js
+          node --check pdf-master/app.mjs
+      - name: Check Linux installer syntax
+        run: bash -n desktop-bundles/linux/install-ivan-tools.sh
