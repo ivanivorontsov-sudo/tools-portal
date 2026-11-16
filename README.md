@@ -29,7 +29,7 @@
 
 ## Технологии
 
-- Чистый HTML + локально собранный Tailwind CSS 3.4.17 (Play CDN не используется в production)
+- Чистый HTML + локально собранный Tailwind CSS 3.4.19 (Play CDN не используется в production)
 - Vanilla JavaScript (SPA с hash-routing)
 - Клиентская обработка где возможно (Canvas API, FileReader)
 - Адаптивный дизайн, тёмная/светлая тема
