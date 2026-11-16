@@ -166,6 +166,36 @@ function renderTool(id) {
 }
 
 function renderToolUI(tool) {
+  if (tool.id === 'zip-create') {
+    return `
+      <div class="space-y-4">
+        <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 text-sm">
+          <p class="font-semibold mb-1">Выберите несколько файлов</p>
+          <p class="text-slate-500">Архив создаётся локально. Ограничение: 100 файлов и 250 МБ суммарно.</p>
+        </div>
+        <label class="block text-sm font-medium mb-1" for="zip-create-files">Файлы для архива</label>
+        <input id="zip-create-files" type="file" multiple class="block w-full text-sm" />
+        <label class="block text-sm font-medium mb-1" for="zip-create-name">Имя архива</label>
+        <input id="zip-create-name" type="text" maxlength="80" value="archive.zip" class="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900" />
+        <button id="zip-create-run" type="button" class="w-full py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold">Создать ZIP</button>
+        <p id="zip-create-status" role="status" aria-live="polite" class="text-sm"></p>
+      </div>`;
+  }
+  if (tool.id === 'zip-extract') {
+    return `
+      <div class="space-y-4">
+        <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 text-sm">
+          <p class="font-semibold mb-1">Выберите ZIP-архив</p>
+          <p class="text-slate-500">Локальное извлечение без загрузки на сервер. Максимум 100 МБ сжатого архива, 200 файлов и 250 МБ распакованных данных.</p>
+        </div>
+        <label class="block text-sm font-medium mb-1" for="zip-extract-file">ZIP-файл</label>
+        <input id="zip-extract-file" type="file" accept=".zip,application/zip" class="block w-full text-sm" />
+        <button id="zip-extract-run" type="button" class="w-full py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold">Открыть архив</button>
+        <p id="zip-extract-status" role="status" aria-live="polite" class="text-sm"></p>
+        <div id="zip-extract-list" class="space-y-2"></div>
+      </div>`;
+  }
+
   // Text-based tools
   if (['password-generator', 'uuid-generator', 'lorem-ipsum', 'unit-converter', 'color-picker', 'base64-encoder', 'url-encoder', 'json-formatter', 'hash-generator', 'case-converter', 'word-counter', 'timestamp-converter', 'regex-tester', 'qr-generator'].includes(tool.id)) {
     return renderTextTool(tool);
@@ -344,6 +374,131 @@ function renderTextTool(tool) {
 }
 
 function initToolLogic(tool) {
+  if (tool.id === 'zip-create') {
+    const input = document.getElementById('zip-create-files');
+    const nameInput = document.getElementById('zip-create-name');
+    const button = document.getElementById('zip-create-run');
+    const status = document.getElementById('zip-create-status');
+    button.addEventListener('click', async () => {
+      const files = [...(input.files || [])];
+      if (!files.length) { status.textContent = 'Выберите хотя бы один файл.'; return; }
+      if (files.length > 100) { status.textContent = 'Слишком много файлов: максимум 100.'; return; }
+      const total = files.reduce((sum, file) => sum + file.size, 0);
+      if (total > 250 * 1024 * 1024) { status.textContent = 'Общий размер файлов превышает 250 МБ.'; return; }
+      if (typeof window.JSZip !== 'function') { status.textContent = 'Локальная библиотека JSZip не загружена. Обновите страницу.'; return; }
+      button.disabled = true;
+      status.textContent = 'Создаю архив…';
+      try {
+        const archive = new window.JSZip();
+        for (const file of files) {
+          const rawPath = file.webkitRelativePath || file.name;
+          const safeParts = rawPath.replace(/\\/g, '/').split('/').filter(part =>
+            part && part !== '.' && part !== '..' && !/^[A-Za-z]:$/.test(part)
+          ).map(part => part.replace(/[\\u0000-\\u001f]/g, '_'));
+          const safeName = safeParts.join('/');
+          if (!safeName) continue;
+          archive.file(safeName, file);
+        }
+        const blob = await archive.generateAsync(
+          { type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } },
+          meta => { status.textContent = 'Упаковка: ' + Math.round(meta.percent) + '%'; }
+        );
+        const objectUrl = URL.createObjectURL(blob);
+        const safeBase = (nameInput.value || 'archive').trim().replace(/\\.zip$/i, '').replace(/[\\\\/:*?"<>|]+/g, '-').slice(0, 70) || 'archive';
+        const link = document.createElement('a');
+        link.href = objectUrl;
+        link.download = safeBase + '.zip';
+        link.className = 'inline-flex items-center px-4 py-2 rounded-lg bg-emerald-600 text-white font-semibold';
+        link.textContent = 'Скачать ' + link.download + ' (' + (blob.size / 1024 / 1024).toFixed(2) + ' МБ)';
+        link.addEventListener('click', () => setTimeout(() => URL.revokeObjectURL(objectUrl), 30000), { once: true });
+        status.replaceChildren(document.createTextNode('Архив готов. '), link);
+      } catch (error) {
+        status.textContent = 'Не удалось создать архив: ' + (error?.message || String(error));
+      } finally {
+        button.disabled = false;
+      }
+    });
+    return;
+  }
+
+  if (tool.id === 'zip-extract') {
+    const input = document.getElementById('zip-extract-file');
+    const button = document.getElementById('zip-extract-run');
+    const status = document.getElementById('zip-extract-status');
+    const list = document.getElementById('zip-extract-list');
+    button.addEventListener('click', async () => {
+      const file = input.files?.[0];
+      list.replaceChildren();
+      if (!file) { status.textContent = 'Выберите ZIP-файл.'; return; }
+      if (file.size > 100 * 1024 * 1024) { status.textContent = 'Архив больше допустимых 100 МБ.'; return; }
+      if (typeof window.JSZip !== 'function') { status.textContent = 'Локальная библиотека JSZip не загружена. Обновите страницу.'; return; }
+      button.disabled = true;
+      status.textContent = 'Проверяю архив…';
+      try {
+        const archive = await window.JSZip.loadAsync(file);
+        const entries = Object.values(archive.files).filter(entry => !entry.dir);
+        if (entries.length > 200) throw new Error('В архиве более 200 файлов.');
+        let declaredTotal = 0;
+        for (const entry of entries) {
+          const size = Number(entry._data?.uncompressedSize);
+          if (!Number.isSafeInteger(size) || size < 0) throw new Error('Не удалось безопасно проверить размер одного из файлов.');
+          declaredTotal += size;
+          if (declaredTotal > 250 * 1024 * 1024) throw new Error('Распакованный размер превышает 250 МБ.');
+          const parts = entry.name.replace(/\\\\/g, '/').split('/');
+          if (!entry.name || entry.name.startsWith('/') || /^[A-Za-z]:/.test(entry.name) || parts.some(part => part === '..')) {
+            throw new Error('В архиве найден небезопасный путь: ' + entry.name);
+          }
+        }
+        if (!entries.length) throw new Error('В архиве нет файлов.');
+        const fragment = document.createDocumentFragment();
+        for (const entry of entries) {
+          const row = document.createElement('div');
+          row.className = 'flex flex-wrap items-center justify-between gap-3 p-3 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700';
+          const details = document.createElement('div');
+          details.className = 'min-w-0 flex-1';
+          const label = document.createElement('p');
+          label.className = 'font-medium break-all';
+          label.textContent = entry.name;
+          const size = document.createElement('p');
+          size.className = 'text-xs text-slate-500';
+          size.textContent = (entry._data.uncompressedSize / 1024).toFixed(1) + ' КБ';
+          details.append(label, size);
+          const download = document.createElement('button');
+          download.type = 'button';
+          download.className = 'px-3 py-2 rounded-lg bg-brand-600 text-white text-sm font-semibold';
+          download.textContent = 'Скачать';
+          download.addEventListener('click', async () => {
+            download.disabled = true;
+            try {
+              const content = await entry.async('blob');
+              const url = URL.createObjectURL(content);
+              const safeName = entry.name.split('/').filter(Boolean).join('__').replace(/[\\\\:*?"<>|]+/g, '_');
+              const anchor = document.createElement('a');
+              anchor.href = url;
+              anchor.download = safeName || 'extracted-file';
+              anchor.click();
+              setTimeout(() => URL.revokeObjectURL(url), 30000);
+              status.textContent = 'Файл подготовлен для скачивания: ' + safeName;
+            } catch (error) {
+              status.textContent = 'Ошибка извлечения: ' + (error?.message || String(error));
+            } finally {
+              download.disabled = false;
+            }
+          });
+          row.append(details, download);
+          fragment.append(row);
+        }
+        list.replaceChildren(fragment);
+        status.textContent = 'Найдено файлов: ' + entries.length + '. Распаковка выполняется отдельно после нажатия «Скачать».';
+      } catch (error) {
+        status.textContent = 'Не удалось открыть архив: ' + (error?.message || String(error));
+      } finally {
+        button.disabled = false;
+      }
+    });
+    return;
+  }
+
   // File based
   const dropzone = document.getElementById('dropzone');
   const fileInput = document.getElementById('file-input');
