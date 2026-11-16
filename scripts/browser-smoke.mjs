@@ -98,6 +98,25 @@ for (const id of imageTests) {
   record(id + " conversion");
 }
 
+// SVG files may use internal fragments, but must not trigger external requests.
+let externalSvgRequests = 0;
+await page.route("https://example.invalid/**", async route => {
+  externalSvgRequests++;
+  await route.abort();
+});
+await openTool("svg-to-png");
+await page.locator("#file-input").setInputFiles({
+  name: "external-reference.svg",
+  mimeType: "image/svg+xml",
+  buffer: Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="16" height="16"><image xlink:href="https://example.invalid/tracker.png" width="16" height="16"/></svg>')
+});
+await page.locator("#convert-btn").click();
+await page.waitForFunction(() => Boolean(document.querySelector("#result .bg-red-50")), null, { timeout: 5000 })
+  .catch(() => errors.push("svg-to-png: external resource was not rejected"));
+if (externalSvgRequests !== 0) errors.push("svg-to-png: attempted to request an external resource");
+await page.unroute("https://example.invalid/**");
+record("SVG external-resource rejection");
+
 // ZIP tools: create a real archive, inspect it, and download an extracted file.
 let zipScenarios = 0;
 try {
