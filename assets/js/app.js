@@ -83,7 +83,7 @@ function renderHome(filterCategory = null, search = '') {
               <div class="w-12 h-12 rounded-xl ${cat.color} flex items-center justify-center text-xl">
                 <i class="fas ${tool.icon}"></i>
               </div>
-              ${tool.client ? '<span class="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300">Клиент</span>' : '<span class="text-xs px-2 py-1 rounded-full bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300">Скоро</span>'}
+              ${tool.externalUrl ? '<span class="text-xs px-2 py-1 rounded-full bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200">Отдельный проект</span>' : tool.client ? '<span class="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300">Готов</span>' : '<span class="text-xs px-2 py-1 rounded-full bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300">Скоро</span>'}
             </div>
             <h3 class="font-semibold text-lg mb-1">${tool.name}</h3>
             <p class="text-sm text-slate-500 dark:text-slate-400 line-clamp-2">${tool.desc}</p>
