@@ -34,8 +34,7 @@ done
 case "$GROUP" in all|core|developer|ai|browser) ;; *) echo "Неизвестная группа: $GROUP" >&2; usage; exit 2 ;; esac
 case "$FORMAT" in appimage|deb) ;; *) echo "Формат должен быть appimage или deb." >&2; exit 2 ;; esac
 
-# Direct downloads only: clear proxy variables and tell curl not to use proxies.
-unset http_proxy https_proxy all_proxy HTTP_PROXY HTTPS_PROXY ALL_PROXY ftp_proxy FTP_PROXY
+# Respect the user's network configuration, including HTTP(S) proxy variables.
 if ! command -v curl >/dev/null 2>&1; then
   echo "Для прямой загрузки требуется curl." >&2
   exit 1
@@ -95,7 +94,7 @@ download_package() {
 
   rm -f "$temporary"
   echo "Скачиваю: $name ($file)"
-  curl --disable --noproxy '*' -fL --retry 3 --connect-timeout 20 -o "$temporary" "$url"
+  curl --disable -fL --retry 3 --connect-timeout 20 -o "$temporary" "$url"
   actual="$(sha256sum "$temporary" | cut -d ' ' -f 1)"
   if [[ "$actual" != "$expected" ]]; then
     rm -f "$temporary"
