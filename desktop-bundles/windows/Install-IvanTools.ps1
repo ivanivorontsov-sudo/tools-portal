@@ -7,12 +7,14 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-# Direct connection only: do not use a configured HTTP proxy.
+# Respect the user's system proxy configuration when one is configured.
 Add-Type -AssemblyName System.Net.Http
 $handler = [System.Net.Http.HttpClientHandler]::new()
-$handler.UseProxy = $false
+$handler.UseProxy = $true
 $handler.AllowAutoRedirect = $true
 $client = [System.Net.Http.HttpClient]::new($handler)
+$client.Timeout = [TimeSpan]::FromMinutes(15)
+$maxDownloadBytes = 1GB
 
 $packages = @(
     [pscustomobject]@{ Id="BystryjSkrin"; Group="daily"; File="BystryjSkrin.exe"; Url="https://github.com/ivanivorontsov-sudo/bystryj-skrin/releases/download/v1.0.0/BystryjSkrin.exe"; Sha256="625f281ff716b114d5e0f93e3e55bfa589dcfea7895b10c0ca2e07c6fbe855fa" },
@@ -56,10 +58,21 @@ try {
                 [System.Net.Http.HttpCompletionOption]::ResponseHeadersRead
             ).GetAwaiter().GetResult()
             $response.EnsureSuccessStatusCode()
+            if ($null -ne $response.Content.Headers.ContentLength -and $response.Content.Headers.ContentLength -gt $maxDownloadBytes) {
+                throw "Файл превышает допустимый размер загрузки 1 ГБ: $($package.File)"
+            }
             $inputStream = $response.Content.ReadAsStreamAsync().GetAwaiter().GetResult()
             $outputStream = [System.IO.File]::Create($temporary)
             try {
-                $inputStream.CopyTo($outputStream)
+                $buffer = New-Object byte[] 81920
+                [long]$downloaded = 0
+                while (($read = $inputStream.Read($buffer, 0, $buffer.Length)) -gt 0) {
+                    $downloaded += $read
+                    if ($downloaded -gt $maxDownloadBytes) {
+                        throw "Файл превысил допустимый размер загрузки 1 ГБ: $($package.File)"
+                    }
+                    $outputStream.Write($buffer, 0, $read)
+                }
             }
             finally {
                 $outputStream.Dispose()
