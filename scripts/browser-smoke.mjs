@@ -8,6 +8,7 @@ const BASE = process.env.PORTAL_URL || "http://127.0.0.1:8766";
 const source = fs.readFileSync(ROOT + "/assets/js/tools-data.js", "utf8");
 const tools = source.split("\n").filter(line => line.includes("{ id:")).map(line => ({
   id: (line.match(/id:\s*"([^"]+)"/) || [])[1],
+  name: (line.match(/name:\s*"([^"]+)"/) || [])[1],
   client: /client:\s*true/.test(line),
   external: /externalUrl:/.test(line)
 })).filter(tool => tool.id);
@@ -33,13 +34,15 @@ function record(label) {
   pageErrors = [];
   localFailures = [];
 }
-async function openTool(id) {
+async function openTool(tool) {
   pageErrors = [];
   localFailures = [];
-  const response = await page.goto(BASE + "/#tool/" + encodeURIComponent(id), { waitUntil: "domcontentloaded" });
-  if (!response || response.status() >= 400) errors.push(id + ": portal page did not load");
-  await page.waitForSelector("#app h1", { timeout: 7000 }).catch(() => errors.push(id + ": tool heading not rendered"));
-  record(id);
+  await page.evaluate(id => { window.location.hash = "tool/" + id; }, tool.id);
+  await page.waitForFunction(name => {
+    const heading = document.querySelector("#app h1");
+    return heading && heading.textContent.trim() === name;
+  }, tool.name, { timeout: 7000 }).catch(() => errors.push(tool.id + ": tool heading not rendered"));
+  record(tool.id);
 }
 
 const response = await page.goto(BASE + "/", { waitUntil: "domcontentloaded" });
@@ -48,7 +51,7 @@ await page.waitForSelector("#app", { timeout: 7000 }).catch(() => errors.push("i
 record("index");
 
 for (const tool of active) {
-  await openTool(tool.id);
+  await openTool(tool);
   if (tool.external) {
     const link = page.locator('#app a[href]').first();
     if (!(await link.count())) errors.push(tool.id + ": external tool route has no link");
@@ -66,7 +69,7 @@ const imageTests = [
   "image-to-base64","image-resizer","image-compressor"
 ];
 for (const id of imageTests) {
-  await openTool(id);
+  await openTool(tools.find(tool => tool.id === id));
   const isSvg = id === "svg-to-png";
   await page.locator("#file-input").setInputFiles({
     name: isSvg ? "audit.svg" : "audit.png",
