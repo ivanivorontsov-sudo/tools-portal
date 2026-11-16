@@ -47,7 +47,7 @@ function renderHome(filterCategory = null, search = '') {
         <span class="bg-gradient-to-r from-brand-600 to-cyan-500 bg-clip-text text-transparent">60+ инструментов</span>
       </h1>
       <p class="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
-        Конвертеры файлов любого формата и полезные утилиты. Всё работает прямо в браузере.
+        Браузерные конвертеры и полезные утилиты. Готовые инструменты работают на устройстве; функции в разработке отмечены «Скоро».
       </p>
     </div>
 
@@ -65,7 +65,7 @@ function renderHome(filterCategory = null, search = '') {
 
     <!-- Mobile search -->
     <div class="md:hidden mb-6">
-      <input type="search" placeholder="Поиск..." oninput="window._search = this.value; render()" 
+      <input id="mobile-search-input" type="search" value="${escapeHtml(window._search || '')}" placeholder="Поиск..." oninput="window._search = this.value; render()" 
         class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500" />
     </div>
 
@@ -566,22 +566,36 @@ function initToolLogic(tool) {
   // Text tools logic
   if (tool.id === 'password-generator') {
     const len = document.getElementById('pw-length');
+    const res = document.getElementById('pw-result');
     len.addEventListener('input', () => document.getElementById('pw-len-val').textContent = len.value);
     document.getElementById('gen-pw').addEventListener('click', () => {
-      const length = +len.value;
+      const length = Math.min(64, Math.max(8, Number(len.value) || 16));
       let chars = '';
       if (document.getElementById('pw-upper').checked) chars += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
       if (document.getElementById('pw-lower').checked) chars += 'abcdefghijklmnopqrstuvwxyz';
       if (document.getElementById('pw-nums').checked) chars += '0123456789';
       if (document.getElementById('pw-syms').checked) chars += '!@#$%^&*()_+-=[]{}|;:,.<>?';
-      if (!chars) return;
-      let pw = '';
-      const arr = new Uint32Array(length);
-      crypto.getRandomValues(arr);
-      for (let i = 0; i < length; i++) pw += chars[arr[i] % chars.length];
-      const res = document.getElementById('pw-result');
-      res.textContent = pw;
       res.classList.remove('hidden');
+      if (!chars) {
+        res.textContent = 'Выберите хотя бы один набор символов.';
+        return;
+      }
+      if (!globalThis.crypto?.getRandomValues) {
+        res.textContent = 'Криптографический генератор случайных чисел недоступен в этом контексте.';
+        return;
+      }
+      let pw = '';
+      const limit = Math.floor(0x100000000 / chars.length) * chars.length;
+      while (pw.length < length) {
+        const batch = new Uint32Array(Math.max(16, length - pw.length));
+        crypto.getRandomValues(batch);
+        for (const value of batch) {
+          if (value >= limit) continue;
+          pw += chars[value % chars.length];
+          if (pw.length === length) break;
+        }
+      }
+      res.textContent = pw;
     });
   }
 
@@ -645,8 +659,17 @@ function initToolLogic(tool) {
         const hex = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
         hashes.push(`<div class="p-2 bg-slate-50 dark:bg-slate-800 rounded"><span class="text-slate-500">${algo}:</span> ${hex}</div>`);
       }
-      // Simple MD5 is not in WebCrypto, skip or note
-      result.innerHTML = hashes.join('') + '<p class="text-xs text-slate-500 mt-2">MD5 недоступен в Web Crypto API</p>';
+      result.replaceChildren();
+      for (const item of hashes) {
+        const line = document.createElement('div');
+        line.className = 'p-2 bg-slate-50 dark:bg-slate-800 rounded break-all';
+        line.textContent = item.replace(/<[^>]*>/g, '');
+        result.append(line);
+      }
+      const note = document.createElement('p');
+      note.className = 'text-xs text-slate-500 mt-2';
+      note.textContent = 'Хеши подходят для контрольных сумм, но не для хранения паролей. SHA-1 устарел для задач криптографической защиты.';
+      result.append(note);
     });
   }
 
@@ -726,30 +749,57 @@ function initToolLogic(tool) {
 
   if (tool.id === 'regex-tester') {
     document.getElementById('regex-test').addEventListener('click', () => {
-      try {
-        const pattern = document.getElementById('regex-pattern').value;
-        const text = document.getElementById('regex-text').value;
-        const re = new RegExp(pattern, 'g');
-        const matches = [...text.matchAll(re)];
-        const res = document.getElementById('regex-result');
-        res.classList.remove('hidden');
-        res.replaceChildren();
-        if (!matches.length) {
-          res.textContent = 'Совпадений нет';
-        } else {
-          const summary = document.createElement('p');
-          summary.textContent = `Найдено: ${matches.length}`;
-          res.append(summary);
-          for (const match of matches) {
-            const line = document.createElement('div');
-            line.textContent = match[0];
-            res.append(line);
-          }
-        }
-      } catch (e) {
-        document.getElementById('regex-result').classList.remove('hidden');
-        document.getElementById('regex-result').textContent = 'Ошибка: ' + e.message;
+      const pattern = document.getElementById('regex-pattern').value;
+      const text = document.getElementById('regex-text').value;
+      const res = document.getElementById('regex-result');
+      res.classList.remove('hidden');
+      res.textContent = 'Проверяю выражение…';
+      if (pattern.length > 256 || text.length > 20000) {
+        res.textContent = 'Слишком большой ввод: максимум 256 символов для выражения и 20 000 для текста.';
+        return;
       }
+      let worker;
+      try {
+        worker = new Worker(new URL('assets/js/regex-worker.js', document.baseURI));
+      } catch (error) {
+        res.textContent = 'Не удалось запустить безопасную проверку Regex: ' + error.message;
+        return;
+      }
+      const timeout = setTimeout(() => {
+        worker.terminate();
+        res.textContent = 'Проверка остановлена: выражение выполнялось слишком долго. Упростите шаблон.';
+      }, 1500);
+      worker.onmessage = event => {
+        clearTimeout(timeout);
+        worker.terminate();
+        const data = event.data || {};
+        if (!data.ok) {
+          res.textContent = 'Ошибка: ' + (data.error || 'неверное регулярное выражение');
+          return;
+        }
+        res.replaceChildren();
+        const summary = document.createElement('p');
+        summary.textContent = data.count > data.matches.length
+          ? `Найдено: более ${data.matches.length} совпадений (показаны первые ${data.matches.length}).`
+          : `Найдено: ${data.count}`;
+        res.append(summary);
+        if (!data.matches.length) {
+          const empty = document.createElement('p');
+          empty.textContent = 'Совпадений нет';
+          res.append(empty);
+        }
+        for (const match of data.matches) {
+          const line = document.createElement('div');
+          line.textContent = match;
+          res.append(line);
+        }
+      };
+      worker.onerror = () => {
+        clearTimeout(timeout);
+        worker.terminate();
+        res.textContent = 'Ошибка Worker при проверке выражения.';
+      };
+      worker.postMessage({ pattern, text, maxMatches: 500 });
     });
   }
 
@@ -838,13 +888,12 @@ async function processClientConversion(tool, file) {
       const ctx = canvas.getContext('2d');
 
       let w = img.width, h = img.height;
+      if (w * h > 40000000) throw new Error('Изображение слишком большое: максимум 40 мегапикселей.');
       if (tool.id === 'image-resizer') {
-        // simple half size for demo, or add inputs later
-        w = Math.round(w / 2); h = Math.round(h / 2);
+        w = Math.max(1, Math.round(w / 2)); h = Math.max(1, Math.round(h / 2));
       }
       canvas.width = w;
       canvas.height = h;
-      ctx.drawImage(img, 0, 0, w, h);
 
       let mime = 'image/png';
       let quality = 0.92;
@@ -858,10 +907,16 @@ async function processClientConversion(tool, file) {
           'image/png': { mime: 'image/png', ext: 'png' },
           'image/webp': { mime: 'image/webp', ext: 'webp' }
         };
-        const imageType = allowedImageTypes[file.type] || allowedImageTypes['image/jpeg'];
+        const imageType = allowedImageTypes[file.type];
+        if (!imageType) throw new Error('Поддерживаются только JPEG, PNG и WEBP.');
         mime = imageType.mime;
         ext = imageType.ext;
         quality = 0.7;
+      }
+      if (mime === 'image/jpeg') {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, w, h);
+        ctx.drawImage(img, 0, 0, w, h);
       }
       if (tool.id === 'image-to-base64') {
         const dataUrl = canvas.toDataURL(mime, quality);
@@ -933,23 +988,22 @@ async function processClientConversion(tool, file) {
       const text = await file.text();
       let out = '';
       if (tool.id === 'csv-to-json') {
-        const lines = text.trim().split('\n');
-        const headers = lines[0].split(',').map(h => h.trim());
-        const data = lines.slice(1).map(line => {
-          const vals = line.split(',');
-          const obj = {};
-          headers.forEach((h, i) => obj[h] = vals[i]?.trim() || '');
-          return obj;
-        });
-        out = JSON.stringify(data, null, 2);
+        out = JSON.stringify(parseCsv(text), null, 2);
       } else if (tool.id === 'json-to-csv') {
         const arr = JSON.parse(text);
-        if (!Array.isArray(arr) || !arr.length) throw new Error('Ожидается массив объектов');
-        const headers = Object.keys(arr[0]);
-        out = headers.join(',') + '\n' + arr.map(o => headers.map(h => o[h]).join(',')).join('\n');
+        if (!Array.isArray(arr) || !arr.length || arr.some(row => !row || typeof row !== 'object' || Array.isArray(row))) {
+          throw new Error('Ожидается непустой массив объектов JSON.');
+        }
+        const headers = [...new Set(arr.flatMap(row => Object.keys(row)))];
+        const csvCell = value => {
+          let cell = value == null ? '' : (typeof value === 'object' ? JSON.stringify(value) : String(value));
+          if (/[",\r\n]/.test(cell)) cell = '"' + cell.replace(/"/g, '""') + '"';
+          return cell;
+        };
+        out = [headers.map(csvCell).join(','), ...arr.map(row => headers.map(key => csvCell(row[key])).join(','))].join('\r\n');
       } else if (tool.id === 'markdown-to-html') {
-        // very basic
-        out = text
+        // Escape source HTML before converting the supported Markdown subset.
+        out = escapeHtml(text)
           .replace(/^### (.*$)/gim, '<h3>$1</h3>')
           .replace(/^## (.*$)/gim, '<h2>$1</h2>')
           .replace(/^# (.*$)/gim, '<h1>$1</h1>')
@@ -986,10 +1040,17 @@ async function processClientConversion(tool, file) {
 
 function loadImage(file) {
   return new Promise((resolve, reject) => {
+    const objectUrl = URL.createObjectURL(file);
     const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = reject;
-    img.src = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve(img);
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error('Не удалось прочитать изображение.'));
+    };
+    img.src = objectUrl;
   });
 }
 
@@ -999,14 +1060,71 @@ function escapeHtml(text) {
   }[char]));
 }
 
+function parseCsv(input) {
+  const text = String(input).replace(/^\uFEFF/, '');
+  if (!text.trim()) throw new Error('CSV-файл пуст.');
+  const rows = [];
+  let row = [], cell = '', quoted = false;
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    if (quoted) {
+      if (char === '"') {
+        if (text[i + 1] === '"') { cell += '"'; i++; }
+        else quoted = false;
+      } else cell += char;
+      continue;
+    }
+    if (char === '"' && cell.length === 0) { quoted = true; continue; }
+    if (char === ',') { row.push(cell); cell = ''; continue; }
+    if (char === '\n' || char === '\r') {
+      if (char === '\r' && text[i + 1] === '\n') i++;
+      row.push(cell); cell = '';
+      if (row.some(value => value !== '') || rows.length) rows.push(row);
+      row = [];
+      continue;
+    }
+    cell += char;
+  }
+  if (quoted) throw new Error('CSV содержит незакрытое поле в кавычках.');
+  row.push(cell);
+  if (row.some(value => value !== '') || !rows.length) rows.push(row);
+  if (!rows.length) throw new Error('В CSV нет строк.');
+  const rawHeaders = rows.shift();
+  const headers = [];
+  const used = new Set();
+  rawHeaders.forEach((raw, index) => {
+    const base = raw.trim() || 'column_' + (index + 1);
+    let key = base, suffix = 2;
+    while (used.has(key)) key = base + '_' + suffix++;
+    used.add(key);
+    headers.push(key);
+  });
+  return rows.map((values, index) => {
+    if (values.length > headers.length) throw new Error('Строка ' + (index + 2) + ' содержит больше столбцов, чем заголовок.');
+    const object = {};
+    headers.forEach((header, column) => { object[header] = values[column] ?? ''; });
+    return object;
+  });
+}
+
 // Main render
 function render() {
+  const focusedMobileSearch = document.activeElement?.id === 'mobile-search-input';
+  const selectionStart = focusedMobileSearch ? document.activeElement.selectionStart : null;
+  const selectionEnd = focusedMobileSearch ? document.activeElement.selectionEnd : null;
   const route = getRoute();
   const search = searchInput?.value || window._search || '';
   if (route.type === 'tool') {
     renderTool(route.id);
   } else {
     renderHome(route.category === '/' ? null : route.category, search);
+    if (focusedMobileSearch) {
+      const replacement = document.getElementById('mobile-search-input');
+      if (replacement) {
+        replacement.focus();
+        if (selectionStart !== null && selectionEnd !== null) replacement.setSelectionRange(selectionStart, selectionEnd);
+      }
+    }
   }
 }
 
