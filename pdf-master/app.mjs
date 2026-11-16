@@ -223,7 +223,6 @@ window.pdfjsLib = pdfjsLib;
           }
           const pdfjs = await pdfjsLib.getDocument({
             data:new Uint8Array(buffer.slice(0)),
-            enableScripting:false,
             isEvalSupported:false,
             cMapUrl:"https://cdn.jsdelivr.net/npm/pdfjs-dist@6.5.438/cmaps/",
             cMapPacked:true,
