@@ -1,4 +1,4 @@
-// Каталог инструментов: 67 карточек, статус готовности задаётся через client/externalUrl.
+// Каталог инструментов: 68 карточек, статус готовности задаётся через client/externalUrl.
 const TOOLS = [
   // === Images (15) ===
   { id: "jpg-to-png", name: "JPG → PNG", category: "image", icon: "fa-image", desc: "Конвертация JPG в PNG; прозрачность не добавляется", client: true },
