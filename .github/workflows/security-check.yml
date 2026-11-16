@@ -11,6 +11,7 @@ on:
       - "assets/js/**"
       - "pdf-master/**"
       - "desktop-bundles/linux/**"
+      - "desktop-bundles/windows/**"
       - "scripts/**"
       - ".github/workflows/security-check.yml"
   pull_request:
@@ -24,6 +25,7 @@ on:
       - "assets/js/**"
       - "pdf-master/**"
       - "desktop-bundles/linux/**"
+      - "desktop-bundles/windows/**"
       - ".github/workflows/security-check.yml"
 
 permissions:
@@ -39,6 +41,7 @@ jobs:
         run: |
           node --check assets/js/app.js
           node --check assets/js/tools-data.js
+          node --check assets/js/regex-worker.js
           node --check pdf-master/app.mjs
       - name: Check Linux installer syntax
         run: bash -n desktop-bundles/linux/install-ivan-tools.sh
@@ -58,3 +61,20 @@ jobs:
           done
           curl -fsS http://127.0.0.1:8766/ >/dev/null
           node scripts/browser-smoke.mjs
+
+
+  windows-installer-syntax:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+      - name: Parse Windows installer
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile("$PWD/desktop-bundles/windows/Install-IvanTools.ps1", [ref]$tokens, [ref]$errors) | Out-Null
+          if ($errors.Count -gt 0) {
+            $errors | ForEach-Object { Write-Error $_.Message }
+            exit 1
+          }
