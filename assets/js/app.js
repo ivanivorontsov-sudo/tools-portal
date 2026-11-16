@@ -419,14 +419,20 @@ function initToolLogic(tool) {
   }
 
   if (tool.id === 'qr-generator') {
-    // Simple QR using external API or canvas (for demo use Google Chart API style or just text)
     document.getElementById('gen-qr').addEventListener('click', () => {
       const text = document.getElementById('qr-text').value.trim();
       if (!text) return;
       const res = document.getElementById('qr-result');
-      // Use a free QR API for simplicity (or implement pure JS later)
-      res.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(text)}" alt="QR" class="rounded-xl shadow" />
-        <p class="mt-2 text-sm text-slate-500">Скачайте изображение правой кнопкой</p>`;
+      try {
+        if (typeof window.qrcode !== 'function') throw new Error('Локальная библиотека QR-кодов не загружена');
+        const qr = window.qrcode(0, 'M');
+        qr.addData(text, 'Byte');
+        qr.make();
+        res.innerHTML = qr.createImgTag(5, 12, 'QR-код') +
+          '<p class="mt-2 text-sm text-slate-500">Код создан прямо в браузере. Сохраните изображение правой кнопкой мыши.</p>';
+      } catch (error) {
+        res.textContent = 'Не удалось создать QR-код: ' + (error && error.message ? error.message : String(error));
+      }
     });
   }
 
