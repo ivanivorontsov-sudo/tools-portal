@@ -51,7 +51,7 @@ jobs:
         run: bash -n desktop-bundles/linux/install-ivan-tools.sh
       - name: Install Playwright Chromium
         run: |
-          npm install --no-save playwright tailwindcss@3.4.17
+          npm install --no-save playwright tailwindcss@3.4.19
           npx tailwindcss -c tailwind.config.cjs -i assets/css/tailwind.input.css -o assets/css/tailwind.min.css --minify
           npx playwright install --with-deps chromium
       - name: Commit generated production CSS
