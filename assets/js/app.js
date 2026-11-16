@@ -31,69 +31,119 @@ function navigate(to) {
   location.hash = to;
 }
 
-// Home page
-function renderHome(filterCategory = null, search = '') {
-  let tools = TOOLS;
-  if (filterCategory) tools = tools.filter(t => t.category === filterCategory);
-  if (search) {
-    const q = search.toLowerCase();
-    tools = tools.filter(t => t.name.toLowerCase().includes(q) || t.desc.toLowerCase().includes(q) || t.id.includes(q));
+// Catalog rendering helpers
+function categoryPageHref(key) {
+  return app.dataset.category ? "./" + key + ".html" : "categories/" + key + ".html";
+}
+function catalogHomeHref() {
+  return app.dataset.category ? "../index.html" : "./";
+}
+function renderToolCards(tools) {
+  return tools.map(function(tool) {
+    const cat = CATEGORIES[tool.category] || CATEGORIES.utility;
+    const status = tool.externalUrl
+      ? '<span class="text-xs px-2 py-1 rounded-full bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200">Отдельный проект</span>'
+      : tool.client
+        ? '<span class="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300">Готов</span>'
+        : '<span class="text-xs px-2 py-1 rounded-full bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300">Скоро</span>';
+    return '<a href="#tool/' + encodeURIComponent(tool.id) + '" class="tool-card block p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition duration-200">' +
+      '<div class="flex items-start justify-between gap-3 mb-3">' +
+        '<div class="w-12 h-12 shrink-0 rounded-xl ' + cat.color + ' flex items-center justify-center text-xl"><i class="fas ' + escapeHtml(tool.icon) + '"></i></div>' +
+        status +
+      '</div>' +
+      '<h3 class="font-semibold text-lg mb-1">' + escapeHtml(tool.name) + '</h3>' +
+      '<p class="text-sm text-slate-500 dark:text-slate-400 line-clamp-2">' + escapeHtml(tool.desc) + '</p>' +
+    '</a>';
+  }).join("");
+}
+
+// Home page and separate category pages
+function renderHome(filterCategory = null, search = "") {
+  const cats = Object.entries(CATEGORIES);
+  const activeCategory = app.dataset.category || filterCategory;
+  const isCategoryPage = Boolean(activeCategory);
+  let tools = activeCategory ? TOOLS.filter(t => t.category === activeCategory) : TOOLS.slice();
+  const q = String(search || "").trim().toLowerCase();
+  if (q) {
+    tools = tools.filter(t =>
+      t.name.toLowerCase().includes(q) ||
+      t.desc.toLowerCase().includes(q) ||
+      t.id.toLowerCase().includes(q)
+    );
   }
 
-  const cats = Object.entries(CATEGORIES);
   const activeLocalCount = TOOLS.filter(tool => tool.client && !tool.externalUrl).length;
   const linkedProjectCount = TOOLS.filter(tool => Boolean(tool.externalUrl)).length;
   const upcomingCount = TOOLS.filter(tool => !tool.client && !tool.externalUrl).length;
+  const mobileSearch = '<div class="md:hidden mb-6">' +
+    '<input id="mobile-search-input" type="search" value="' + escapeHtml(window._search || "") + '" placeholder="Поиск по каталогу..." ' +
+    'oninput="window._search = this.value; render()" class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500" />' +
+    '</div>';
 
-  app.innerHTML = `
-    <div class="mb-10 text-center">
-      <h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight mb-4">
-        <span class="bg-gradient-to-r from-brand-600 to-cyan-500 bg-clip-text text-transparent">${activeLocalCount} работающих инструментов</span>
-      </h1>
-      <p class="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
-        В каталоге ${TOOLS.length} карточек: ${activeLocalCount} локальных инструментов, ${linkedProjectCount} отдельных проектов и ${upcomingCount} функций со статусом «Скоро».
-      </p>
-    </div>
+  if (isCategoryPage) {
+    const category = CATEGORIES[activeCategory];
+    if (!category) {
+      app.innerHTML = '<div class="text-center py-20"><h1 class="text-2xl font-bold mb-4">Раздел не найден</h1><a href="' + catalogHomeHref() + '" class="text-brand-600 hover:underline">← Все инструменты</a></div>';
+      return;
+    }
+    const categoryNav = cats.map(([key, cat]) =>
+      '<a href="' + categoryPageHref(key) + '" class="inline-flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium ' +
+      (key === activeCategory ? 'bg-brand-600 text-white' : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700') +
+      '"><i class="fas ' + cat.icon + '"></i>' + cat.name + '<span class="opacity-70">(' + TOOLS.filter(t => t.category === key).length + ')</span></a>'
+    ).join("");
+    app.innerHTML =
+      '<div class="mb-6"><a href="' + catalogHomeHref() + '" class="text-sm text-brand-600 hover:underline">← Все инструменты</a>' +
+      '<h1 class="mt-4 text-3xl sm:text-4xl font-extrabold tracking-tight">' + category.name + '</h1>' +
+      '<p class="mt-2 text-slate-600 dark:text-slate-400">' + tools.length + ' инструментов в разделе. Рабочие функции отмечены статусом «Готов», незавершённые — «Скоро».</p></div>' +
+      '<nav class="category-page-nav flex flex-wrap gap-2 mb-7" aria-label="Другие разделы">' + categoryNav + '</nav>' +
+      mobileSearch +
+      (tools.length ? '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">' + renderToolCards(tools) + '</div>' :
+        '<p class="text-center text-slate-500 py-20">По этому запросу ничего не найдено.</p>');
+    return;
+  }
 
-    <!-- Categories -->
-    <div class="flex flex-wrap justify-center gap-3 mb-10">
-      <button onclick="navigate('/')" class="px-4 py-2 rounded-full text-sm font-medium transition ${!filterCategory ? 'bg-brand-600 text-white' : 'bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600'}">
-        Все (${TOOLS.length})
-      </button>
-      ${cats.map(([key, cat]) => `
-        <button onclick="navigate('${key}')" class="px-4 py-2 rounded-full text-sm font-medium transition flex items-center gap-2 ${filterCategory === key ? 'bg-brand-600 text-white' : 'bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600'}">
-          <i class="fas ${cat.icon}"></i> ${cat.name} (${TOOLS.filter(t => t.category === key).length})
-        </button>
-      `).join('')}
-    </div>
+  const quickNav = cats.map(([key, cat]) =>
+    '<button type="button" class="category-jump-button" data-jump="' + key + '">' +
+    '<i class="fas ' + cat.icon + '" aria-hidden="true"></i><span>' + cat.name + '</span>' +
+    '<span class="category-jump-count">' + TOOLS.filter(t => t.category === key).length + '</span></button>'
+  ).join("");
 
-    <!-- Mobile search -->
-    <div class="md:hidden mb-6">
-      <input id="mobile-search-input" type="search" value="${escapeHtml(window._search || '')}" placeholder="Поиск..." oninput="window._search = this.value; render()" 
-        class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500" />
-    </div>
+  const sections = cats.map(([key, cat]) => {
+    const group = tools.filter(t => t.category === key);
+    if (!group.length) return "";
+    return '<section id="category-' + key + '" class="tool-category-section mb-12" aria-labelledby="category-title-' + key + '">' +
+      '<div class="flex flex-wrap items-center justify-between gap-3 mb-5">' +
+        '<div class="flex items-center gap-3"><div class="w-11 h-11 rounded-xl ' + cat.color + ' grid place-items-center text-xl"><i class="fas ' + cat.icon + '"></i></div>' +
+        '<div><h2 id="category-title-' + key + '" class="text-2xl font-bold">' + cat.name + '</h2>' +
+        '<p class="text-sm text-slate-500 dark:text-slate-400">' + group.length + ' найдено · всего в разделе ' + TOOLS.filter(t => t.category === key).length + '</p></div></div>' +
+        '<a href="' + categoryPageHref(key) + '" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-brand-500 text-sm font-semibold">Открыть отдельную страницу <i class="fas fa-arrow-right"></i></a>' +
+      '</div>' +
+      '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">' + renderToolCards(group) + '</div>' +
+      '</section>';
+  }).join("");
 
-    <!-- Grid -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-      ${tools.map(tool => {
-        const cat = CATEGORIES[tool.category];
-        return `
-          <a href="#tool/${tool.id}" class="tool-card block p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition duration-200">
-            <div class="flex items-start justify-between mb-3">
-              <div class="w-12 h-12 rounded-xl ${cat.color} flex items-center justify-center text-xl">
-                <i class="fas ${tool.icon}"></i>
-              </div>
-              ${tool.externalUrl ? '<span class="text-xs px-2 py-1 rounded-full bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200">Отдельный проект</span>' : tool.client ? '<span class="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300">Готов</span>' : '<span class="text-xs px-2 py-1 rounded-full bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300">Скоро</span>'}
-            </div>
-            <h3 class="font-semibold text-lg mb-1">${tool.name}</h3>
-            <p class="text-sm text-slate-500 dark:text-slate-400 line-clamp-2">${tool.desc}</p>
-          </a>
-        `;
-      }).join('')}
-    </div>
+  app.innerHTML =
+    '<div id="catalog-top" class="mb-8 text-center">' +
+      '<h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight mb-4"><span class="bg-gradient-to-r from-brand-600 to-cyan-500 bg-clip-text text-transparent">Каталог инструментов</span></h1>' +
+      '<p class="text-lg text-slate-600 dark:text-slate-400 max-w-3xl mx-auto">Все ' + TOOLS.length + ' карточек собраны здесь, по темам. Можно перейти к нужному разделу кнопкой сверху или открыть его как отдельную страницу.</p>' +
+      '<div class="flex flex-wrap justify-center gap-2 mt-5 text-sm text-slate-500 dark:text-slate-400">' +
+        '<span class="rounded-full bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300 px-3 py-1">' + activeLocalCount + ' готовы</span>' +
+        '<span class="rounded-full bg-slate-100 dark:bg-slate-800 px-3 py-1">' + linkedProjectCount + ' отдельных проекта</span>' +
+        '<span class="rounded-full bg-slate-100 dark:bg-slate-800 px-3 py-1">' + upcomingCount + ' в разработке</span>' +
+      '</div>' +
+    '</div>' +
+    '<nav class="category-quicknav mb-8" aria-label="Быстрый переход к разделу">' +
+      '<div class="category-quicknav-inner"><span class="category-quicknav-label">Перейти к:</span>' + quickNav + '</div>' +
+    '</nav>' +
+    mobileSearch +
+    (sections || '<p class="text-center text-slate-500 py-20">По этому запросу ничего не найдено.</p>');
 
-    ${tools.length === 0 ? '<p class="text-center text-slate-500 py-20">Ничего не найдено</p>' : ''}
-  `;
+  app.querySelectorAll("[data-jump]").forEach(button => {
+    button.addEventListener("click", () => {
+      const section = document.getElementById("category-" + button.dataset.jump);
+      if (section) section.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  });
 }
 
 // Tool page
@@ -1200,7 +1250,8 @@ function render() {
   if (route.type === 'tool') {
     renderTool(route.id);
   } else {
-    renderHome(route.category === '/' ? null : route.category, search);
+    const pageCategory = app.dataset.category || (route.category === '/' ? null : route.category);
+    renderHome(pageCategory, search);
     if (focusedMobileSearch) {
       const replacement = document.getElementById('mobile-search-input');
       if (replacement) {
