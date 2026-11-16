@@ -10,12 +10,12 @@ const TOOLS = [
   { id: "bmp-to-jpg", name: "BMP → JPG", category: "image", icon: "fa-image", desc: "Конвертация BMP в JPG", client: true },
   { id: "tiff-to-png", name: "TIFF → PNG", category: "image", icon: "fa-image", desc: "Конвертация TIFF в PNG", client: false },
   { id: "ico-to-png", name: "ICO → PNG", category: "image", icon: "fa-icons", desc: "Конвертация ICO в PNG", client: true },
-  { id: "gif-to-png", name: "GIF → PNG", category: "image", icon: "fa-image", desc: "Извлечение кадров GIF в PNG", client: true },
+  { id: "gif-to-png", name: "GIF → PNG", category: "image", icon: "fa-image", desc: "Извлечение первого кадра GIF в PNG", client: true },
   { id: "avif-to-jpg", name: "AVIF → JPG", category: "image", icon: "fa-image", desc: "Конвертация AVIF в JPG", client: false },
   { id: "png-to-ico", name: "PNG → ICO", category: "image", icon: "fa-icons", desc: "Создание ICO из PNG", client: true },
   { id: "image-to-base64", name: "Image → Base64", category: "image", icon: "fa-code", desc: "Кодирование изображения в Base64", client: true },
   { id: "base64-to-image", name: "Base64 → Image", category: "image", icon: "fa-code", desc: "Декодирование Base64 в изображение", client: false },
-  { id: "image-resizer", name: "Изменение размера", category: "image", icon: "fa-expand", desc: "Изменение размера изображения", client: true },
+  { id: "image-resizer", name: "Изменение размера", category: "image", icon: "fa-expand", desc: "Уменьшение изображения в 2 раза", client: true },
 
   // === Video (10) ===
   { id: "mp4-to-avi", name: "MP4 → AVI", category: "video", icon: "fa-video", desc: "Конвертация MP4 в AVI", client: false },
@@ -55,7 +55,7 @@ const TOOLS = [
   { id: "json-to-csv", name: "JSON → CSV", category: "document", icon: "fa-file-code", desc: "Конвертация JSON в CSV", client: true },
 
   // === Utilities (15+) ===
-  { id: "image-compressor", name: "Сжатие изображений", category: "utility", icon: "fa-compress", desc: "Сжатие JPG/PNG/WEBP без потери качества", client: true },
+  { id: "image-compressor", name: "Сжатие изображений", category: "utility", icon: "fa-compress", desc: "Перекодирование JPG/PNG/WEBP для уменьшения размера; возможна потеря качества", client: true },
   { id: "pdf-merger", name: "Объединение PDF", category: "utility", icon: "fa-object-group", desc: "Объединение нескольких PDF в один", client: false },
   { id: "pdf-splitter", name: "Разделение PDF", category: "utility", icon: "fa-cut", desc: "Разделение PDF на страницы", client: false },
   { id: "qr-generator", name: "Генератор QR-кодов", category: "utility", icon: "fa-qrcode", desc: "Создание QR-кодов из текста/URL", client: true },
