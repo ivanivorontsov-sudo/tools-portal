@@ -394,7 +394,7 @@ function initToolLogic(tool) {
           const rawPath = file.webkitRelativePath || file.name;
           const safeParts = rawPath.replace(/\\/g, '/').split('/').filter(part =>
             part && part !== '.' && part !== '..' && !/^[A-Za-z]:$/.test(part)
-          ).map(part => part.replace(/[\\u0000-\\u001f]/g, '_'));
+          ).map(part => part.replace(/[\x00-\x1F]/g, '_'));
           const safeName = safeParts.join('/');
           if (!safeName) continue;
           archive.file(safeName, file);
@@ -404,7 +404,7 @@ function initToolLogic(tool) {
           meta => { status.textContent = 'Упаковка: ' + Math.round(meta.percent) + '%'; }
         );
         const objectUrl = URL.createObjectURL(blob);
-        const safeBase = (nameInput.value || 'archive').trim().replace(/\\.zip$/i, '').replace(/[\\\\/:*?"<>|]+/g, '-').slice(0, 70) || 'archive';
+        const safeBase = (nameInput.value || 'archive').trim().replace(/\.zip$/i, '').replace(/[\\/:*?"<>|]+/g, '-').slice(0, 70) || 'archive';
         const link = document.createElement('a');
         link.href = objectUrl;
         link.download = safeBase + '.zip';
@@ -472,7 +472,7 @@ function initToolLogic(tool) {
             try {
               const content = await entry.async('blob');
               const url = URL.createObjectURL(content);
-              const safeName = entry.name.split('/').filter(Boolean).join('__').replace(/[\\\\:*?"<>|]+/g, '_');
+              const safeName = entry.name.split('/').filter(Boolean).join('__').replace(/[\\:*?"<>|]+/g, '_');
               const anchor = document.createElement('a');
               anchor.href = url;
               anchor.download = safeName || 'extracted-file';
