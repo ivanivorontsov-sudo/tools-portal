@@ -9,6 +9,8 @@ on:
       - "privacy.html"
       - "index.html"
       - "assets/js/**"
+      - "assets/css/**"
+      - "tailwind.config.cjs"
       - "pdf-master/**"
       - "desktop-bundles/linux/**"
       - "desktop-bundles/windows/**"
@@ -23,13 +25,15 @@ on:
       - "privacy.html"
       - "index.html"
       - "assets/js/**"
+      - "assets/css/**"
+      - "tailwind.config.cjs"
       - "pdf-master/**"
       - "desktop-bundles/linux/**"
       - "desktop-bundles/windows/**"
       - ".github/workflows/security-check.yml"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   syntax:
@@ -47,8 +51,18 @@ jobs:
         run: bash -n desktop-bundles/linux/install-ivan-tools.sh
       - name: Install Playwright Chromium
         run: |
-          npm install --no-save playwright
+          npm install --no-save playwright tailwindcss@3.4.17
+          npx tailwindcss -c tailwind.config.cjs -i assets/css/tailwind.input.css -o assets/css/tailwind.min.css --minify
           npx playwright install --with-deps chromium
+      - name: Commit generated production CSS
+        run: |
+          if [[ -n "$(git status --porcelain -- assets/css/tailwind.min.css)" ]]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add assets/css/tailwind.min.css
+            git commit -m "Build production Tailwind CSS"
+            git push origin HEAD:main
+          fi
       - name: Browser smoke tests for active tools
         run: |
           set -Eeuo pipefail
