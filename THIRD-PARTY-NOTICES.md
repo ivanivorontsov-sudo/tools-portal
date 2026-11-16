@@ -8,10 +8,11 @@ This file supplements, and does not replace, the license texts stored alongside 
 |---|---:|---|---|
 | JSZip | 3.10.2 | MIT OR GPL-3.0-or-later; this project uses the MIT option | `assets/js/vendor/jszip.min.js`; full dual-license text: `assets/js/vendor/JSZIP-LICENSE.txt` |
 | Pako | 1.0.5 | MIT | Bundled dependency of JSZip; `assets/js/vendor/PAKO-LICENSE.txt` |
+| JSZip browser-bundle dependencies | versions recorded in the upstream JSZip 3.10.2 lock file | MIT and ISC | `assets/js/vendor/JSZIP-DEPENDENCY-LICENSES.txt` |
 | QR Code Generator for JavaScript (Kazuhiko Arase) | bundled source | MIT | `assets/js/vendor/qrcode-generator.js`; `assets/js/vendor/QRCODE-LICENSE.txt` |
 | Tailwind CSS | 3.4.19 | MIT | Compiled into `assets/css/tailwind.min.css`; `assets/css/TAILWIND-LICENSE.txt` |
 
-JSZip's upstream package metadata also declares the browser-bundle dependencies `lie`, `readable-stream` and `setimmediate`; the `lie` package in turn declares `immediate`. These are permissively licensed upstream components. Their exact package versions and sources are documented in the JSZip 3.10.2 package manifest and lock file: [package.json](https://github.com/Stuk/jszip/blob/v3.10.2/package.json) · [package-lock.json](https://github.com/Stuk/jszip/blob/v3.10.2/package-lock.json). The project retains the upstream JSZip distribution rather than modifying those embedded modules.
+The JSZip browser distribution also bundles its runtime dependency graph (including `lie`, `immediate`, `readable-stream`, `setimmediate` and their smaller utility modules). The exact versions, copyright notices and MIT/ISC terms are collected in `assets/js/vendor/JSZIP-DEPENDENCY-LICENSES.txt`; the list is based on the upstream JSZip 3.10.2 manifest and lock file: [package.json](https://github.com/Stuk/jszip/blob/v3.10.2/package.json) · [package-lock.json](https://github.com/Stuk/jszip/blob/v3.10.2/package-lock.json). The project retains the upstream JSZip distribution rather than modifying those embedded modules.
 
 ## Loaded from external CDNs at runtime
 
