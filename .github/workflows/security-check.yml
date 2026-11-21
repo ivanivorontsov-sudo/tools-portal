@@ -42,10 +42,14 @@ permissions:
 
 jobs:
   syntax:
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: Check browser JavaScript
         run: |
           node --check assets/js/app.js
@@ -67,6 +71,20 @@ jobs:
           name: generated-tailwind-css
           path: /tmp/tailwind.min.css
           retention-days: 1
+      - name: Refresh tracked CSS on this repository's PR branch
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: |
+          if cmp -s assets/css/tailwind.min.css /tmp/tailwind.min.css; then exit 0; fi
+          cp /tmp/tailwind.min.css assets/css/tailwind.min.css
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/css/tailwind.min.css
+          git commit -m "build: refresh production Tailwind CSS"
+          AUTH="$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
+          git -c "http.extraheader=AUTHORIZATION: basic $AUTH" push origin "HEAD:${HEAD_REF}"
       - name: Verify tracked production CSS
         run: |
           cmp --silent assets/css/tailwind.min.css /tmp/tailwind.min.css || {
