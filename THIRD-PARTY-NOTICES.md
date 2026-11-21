@@ -10,6 +10,7 @@ This file supplements, and does not replace, the license texts stored alongside 
 | Pako | 1.0.5 | MIT | Bundled dependency of JSZip; `assets/js/vendor/PAKO-LICENSE.txt` |
 | JSZip browser-bundle dependencies | versions recorded in the upstream JSZip 3.10.2 lock file | MIT and ISC | `assets/js/vendor/JSZIP-DEPENDENCY-LICENSES.txt` |
 | QR Code Generator for JavaScript (Kazuhiko Arase) | bundled source | MIT | `assets/js/vendor/qrcode-generator.js`; `assets/js/vendor/QRCODE-LICENSE.txt` |
+| jsQR | 1.4.0 | Apache-2.0 | `assets/js/vendor/jsQR.js`; full license: `assets/js/vendor/JSQR-LICENSE.txt` |
 | Tailwind CSS | 3.4.19 | MIT | Compiled into `assets/css/tailwind.min.css`; `assets/css/TAILWIND-LICENSE.txt` |
 
 The JSZip browser distribution also bundles its runtime dependency graph (including `lie`, `immediate`, `readable-stream`, `setimmediate` and their smaller utility modules). The exact versions, copyright notices and MIT/ISC terms are collected in `assets/js/vendor/JSZIP-DEPENDENCY-LICENSES.txt`; the list is based on the upstream JSZip 3.10.2 manifest and lock file: [package.json](https://github.com/Stuk/jszip/blob/v3.10.2/package.json) · [package-lock.json](https://github.com/Stuk/jszip/blob/v3.10.2/package-lock.json). The project retains the upstream JSZip distribution rather than modifying those embedded modules.
