@@ -401,13 +401,27 @@ function inspectQrPayload(rawValue) {
 
 function renderQrAnalysis(container, rawValue) {
   const result = inspectQrPayload(rawValue);
-  const colors = {
-    danger: "border-red-300 bg-red-50 text-red-900 dark:border-red-800 dark:bg-red-950/40 dark:text-red-100",
-    warning: "border-amber-300 bg-amber-50 text-amber-950 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100",
-    info: "border-slate-200 bg-slate-50 text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-  };
   const box = document.createElement("div");
-  box.className = "rounded-xl border p-4 space-y-3 " + colors[result.level];
+  box.className = "rounded-xl border p-4 space-y-4";
+  const isDark = document.documentElement.classList.contains("dark");
+  const palettes = {
+    danger: {
+      light: { border: "#fca5a5", background: "#fef2f2", color: "#7f1d1d" },
+      dark: { border: "#7f1d1d", background: "rgba(127, 29, 29, .22)", color: "#fecaca" }
+    },
+    warning: {
+      light: { border: "#fcd34d", background: "#fffbeb", color: "#78350f" },
+      dark: { border: "#92400e", background: "rgba(120, 53, 15, .25)", color: "#fde68a" }
+    },
+    info: {
+      light: { border: "#e2e8f0", background: "#f8fafc", color: "#1e293b" },
+      dark: { border: "#334155", background: "#0f172a", color: "#e2e8f0" }
+    }
+  };
+  const palette = palettes[result.level][isDark ? "dark" : "light"];
+  box.style.borderColor = palette.border;
+  box.style.backgroundColor = palette.background;
+  box.style.color = palette.color;
 
   const heading = document.createElement("h3");
   heading.className = "font-semibold";
@@ -423,7 +437,11 @@ function renderQrAnalysis(container, rawValue) {
 
   if (result.warnings.length) {
     const list = document.createElement("ul");
-    list.className = "list-disc pl-5 space-y-1 text-sm";
+    list.className = "text-sm";
+    list.style.listStyleType = "disc";
+    list.style.paddingLeft = "1.25rem";
+    list.style.display = "grid";
+    list.style.rowGap = "0.25rem";
     for (const item of result.warnings) {
       const row = document.createElement("li");
       row.textContent = item.text;
@@ -437,7 +455,7 @@ function renderQrAnalysis(container, rawValue) {
     link.href = result.href;
     link.target = "_blank";
     link.rel = "noopener noreferrer";
-    link.className = "inline-flex items-center justify-center rounded-lg bg-brand-600 px-4 py-2 text-white font-medium hover:bg-brand-700";
+    link.className = "inline-flex items-center justify-center rounded-lg bg-brand-600 px-4 py-2 text-white font-medium";
     link.textContent = "Открыть в новой вкладке после проверки";
     box.appendChild(link);
   }
@@ -448,13 +466,16 @@ function renderQrAnalysis(container, rawValue) {
   summary.className = "cursor-pointer font-medium";
   summary.textContent = "Показать полное содержимое QR-кода";
   const payload = document.createElement("pre");
-  payload.className = "mt-2 whitespace-pre-wrap break-all rounded-lg bg-white/70 p-3 font-mono text-xs dark:bg-black/20";
+  payload.className = "mt-2 break-all rounded-lg p-3 font-mono text-xs";
+  payload.style.whiteSpace = "pre-wrap";
+  payload.style.backgroundColor = isDark ? "rgba(0, 0, 0, .2)" : "rgba(255, 255, 255, .7)";
   payload.textContent = result.value;
   details.append(summary, payload);
   box.appendChild(details);
 
   const disclaimer = document.createElement("p");
-  disclaimer.className = "text-xs opacity-80";
+  disclaimer.className = "text-xs";
+  disclaimer.style.opacity = "0.8";
   disclaimer.textContent = "Проверка выполняется локально и по простым признакам формата. Репутация сайта и фактическое содержимое страницы не проверяются; предупреждений может быть недостаточно.";
   box.appendChild(disclaimer);
 
@@ -486,24 +507,24 @@ function renderTextTool(tool) {
         <div id="uuid-result" class="p-4 bg-slate-100 dark:bg-slate-900 rounded-xl font-mono text-center break-all"></div>`;
     case 'qr-generator':
       return `
-        <div class="space-y-6">
-          <section class="rounded-2xl border border-slate-200 dark:border-slate-700 p-4 sm:p-5">
+        <div class="space-y-4">
+          <section class="rounded-2xl border border-slate-200 dark:border-slate-700 p-4 p-4">
             <h2 class="font-semibold text-lg mb-3">Создать QR-код</h2>
             <textarea id="qr-text" rows="3" placeholder="Введите текст или URL..." class="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500"></textarea>
             <button id="gen-qr" type="button" class="mt-4 w-full py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold">Создать QR</button>
             <div id="qr-result" class="mt-6 flex justify-center flex-wrap gap-3"></div>
           </section>
-          <section class="rounded-2xl border border-slate-200 dark:border-slate-700 p-4 sm:p-5">
+          <section class="rounded-2xl border border-slate-200 dark:border-slate-700 p-4 p-4">
             <h2 class="font-semibold text-lg mb-2">Сканировать QR из изображения</h2>
             <p class="text-sm text-slate-500 dark:text-slate-400 mb-3">Выберите фото или скриншот с QR-кодом. Изображение читается прямо в браузере и не загружается на сервер.</p>
             <input id="qr-scan-file" type="file" accept="image/*" class="block w-full text-sm" />
             <p id="qr-scan-status" role="status" aria-live="polite" class="mt-3 text-sm"></p>
           </section>
-          <section class="rounded-2xl border border-slate-200 dark:border-slate-700 p-4 sm:p-5">
+          <section class="rounded-2xl border border-slate-200 dark:border-slate-700 p-4 p-4">
             <h2 class="font-semibold text-lg mb-2">Проверить содержимое QR-кода</h2>
             <p class="text-sm text-slate-500 dark:text-slate-400 mb-3">Можно вставить текст, скопированный из любого сканера. Ссылки не открываются автоматически.</p>
             <textarea id="qr-check-input" rows="3" placeholder="Вставьте содержимое QR-кода..." class="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500"></textarea>
-            <button id="qr-analyze" type="button" class="mt-3 w-full py-3 rounded-xl bg-slate-700 hover:bg-slate-800 text-white font-semibold">Проверить адрес и содержимое</button>
+            <button id="qr-analyze" type="button" class="mt-3 w-full py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold">Проверить адрес и содержимое</button>
             <div id="qr-analysis" class="mt-4" role="status" aria-live="polite"></div>
           </section>
         </div>`;
