@@ -294,6 +294,173 @@ function getAccept(tool) {
   return map[tool.id] || '*/*';
 }
 
+const QR_SHORTENER_HOSTS = new Set([
+  "bit.ly", "t.co", "tinyurl.com", "is.gd", "cutt.ly",
+  "rb.gy", "rebrand.ly", "shorturl.at", "ow.ly", "buff.ly"
+]);
+
+function inspectQrPayload(rawValue) {
+  const value = String(rawValue || "").trim();
+  const warnings = [];
+  const add = (level, text) => warnings.push({ level, text });
+  if (!value) {
+    return { value, summary: "Введите содержимое QR-кода", level: "info", warnings, href: null, host: "" };
+  }
+
+  if (/[\u0000-\u001F\u007F-\u009F\u200B-\u200F\u202A-\u202E\u2060\uFEFF]/.test(value)) {
+    add("warning", "В строке есть управляющие или невидимые символы. Проверьте адрес посимвольно.");
+  }
+  if (value.length > 4096) {
+    add("warning", "Содержимое необычно длинное. Не открывайте его, пока не разберётесь, зачем оно нужно.");
+  }
+
+  const schemeMatch = value.match(/^([a-z][a-z0-9+.-]*):/i);
+  const dangerousSchemes = new Set(["javascript", "data", "file", "vbscript", "intent"]);
+  if (schemeMatch && dangerousSchemes.has(schemeMatch[1].toLowerCase())) {
+    add("danger", "Используется схема " + schemeMatch[1].toLowerCase() + ": она не является обычной веб-ссылкой и может запускать действие или открывать локальный ресурс.");
+    return { value, summary: "Нестандартная схема — не открывайте автоматически", level: "danger", warnings, href: null, host: "" };
+  }
+
+  let candidate = value;
+  if (!schemeMatch && /^(?:www\.)?(?:[a-z0-9-]+\.)+[a-z]{2,}(?::\d+)?(?:[/?#].*)?$/i.test(value)) {
+    candidate = "https://" + value;
+    add("warning", "В QR-коде не указана схема. Для анализа добавлено https://, но исходный текст не изменён.");
+  } else if (schemeMatch && !["http", "https"].includes(schemeMatch[1].toLowerCase())) {
+    const kind = schemeMatch[1].toLowerCase();
+    add("info", "Это не обычная веб-ссылка (тип: " + kind + "). Приложение не запускает её и не выполняет действие.");
+    return { value, summary: "QR-код содержит специальный тип данных", level: "info", warnings, href: null, host: "" };
+  }
+
+  let url;
+  try {
+    url = new URL(candidate);
+  } catch (_) {
+    add("info", "Содержимое не распознано как обычная веб-ссылка. Никаких действий не выполнено.");
+    return { value, summary: "Текстовый или специальный QR-код", level: "info", warnings, href: null, host: "" };
+  }
+
+  if (!["http:", "https:"].includes(url.protocol) || !url.hostname) {
+    add("danger", "Разрешены только обычные HTTP/HTTPS-ссылки. Другие схемы автоматически не открываются.");
+    return { value, summary: "Ссылка не поддерживает безопасный предпросмотр", level: "danger", warnings, href: null, host: "" };
+  }
+
+  const host = url.hostname.toLowerCase();
+  if (url.protocol === "http:") {
+    add("warning", "Используется HTTP без шифрования. Содержимое соединения может быть перехвачено или изменено.");
+  }
+  if (url.username || url.password) {
+    add("danger", "В адрес встроены имя пользователя или пароль. Такой URL может маскировать настоящий домен.");
+  }
+  if (host.split(".").some(label => label.startsWith("xn--"))) {
+    add("warning", "Домен содержит Punycode. Проверьте написание: похожие символы разных алфавитов могут маскировать подмену сайта.");
+  }
+
+  const ipv4 = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+  const isIpv4 = Boolean(ipv4 && ipv4.slice(1).every(part => Number(part) <= 255));
+  const isIpv6 = /^\[[0-9a-f:]+\]$/i.test(host);
+  if (isIpv4 || isIpv6) {
+    add("warning", "Вместо доменного имени используется IP-адрес. Убедитесь, что вы ожидаете именно этот сервер.");
+  }
+  if (host === "localhost" || host.endsWith(".local") ||
+      /^10\./.test(host) || /^192\.168\./.test(host) ||
+      /^172\.(1[6-9]|2\d|3[01])\./.test(host)) {
+    add("warning", "Адрес ведёт в локальную сеть или на устройство. Не открывайте его, если не знаете источник.");
+  }
+
+  const normalizedHost = host.replace(/^www\./, "");
+  if (QR_SHORTENER_HOSTS.has(normalizedHost)) {
+    add("warning", "Используется сокращатель ссылок. Конечный адрес скрыт до перехода.");
+  }
+  if (url.port) {
+    add("warning", "Указан нестандартный порт " + url.port + ". Проверьте, почему сайт использует его.");
+  }
+  const trackingKeys = Array.from(url.searchParams.keys()).filter(key =>
+    /^(utm_|fbclid$|gclid$|yclid$|mc_cid$|mc_eid$)/i.test(key)
+  );
+  if (trackingKeys.length) {
+    add("info", "Обнаружены параметры отслеживания: " + trackingKeys.slice(0, 5).join(", ") + ".");
+  }
+
+  if (!warnings.length) {
+    add("info", "Автоматических предупреждений по формату адреса не найдено. Это не означает, что сайт безопасен.");
+  }
+  const level = warnings.some(item => item.level === "danger") ? "danger" :
+    warnings.some(item => item.level === "warning") ? "warning" : "info";
+  const summary = level === "danger" ? "Есть опасные признаки — не открывайте ссылку" :
+    level === "warning" ? "Проверьте адрес перед переходом" :
+      "Явных предупреждений по формату не найдено";
+  return {
+    value,
+    summary,
+    level,
+    warnings,
+    host: url.host,
+    href: (url.username || url.password) ? null : url.href
+  };
+}
+
+function renderQrAnalysis(container, rawValue) {
+  const result = inspectQrPayload(rawValue);
+  const colors = {
+    danger: "border-red-300 bg-red-50 text-red-900 dark:border-red-800 dark:bg-red-950/40 dark:text-red-100",
+    warning: "border-amber-300 bg-amber-50 text-amber-950 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100",
+    info: "border-slate-200 bg-slate-50 text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+  };
+  const box = document.createElement("div");
+  box.className = "rounded-xl border p-4 space-y-3 " + colors[result.level];
+
+  const heading = document.createElement("h3");
+  heading.className = "font-semibold";
+  heading.textContent = result.summary;
+  box.appendChild(heading);
+
+  if (result.host) {
+    const host = document.createElement("p");
+    host.className = "text-sm font-mono break-all";
+    host.textContent = "Адрес назначения: " + result.host;
+    box.appendChild(host);
+  }
+
+  if (result.warnings.length) {
+    const list = document.createElement("ul");
+    list.className = "list-disc pl-5 space-y-1 text-sm";
+    for (const item of result.warnings) {
+      const row = document.createElement("li");
+      row.textContent = item.text;
+      list.appendChild(row);
+    }
+    box.appendChild(list);
+  }
+
+  if (result.href) {
+    const link = document.createElement("a");
+    link.href = result.href;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.className = "inline-flex items-center justify-center rounded-lg bg-brand-600 px-4 py-2 text-white font-medium hover:bg-brand-700";
+    link.textContent = "Открыть в новой вкладке после проверки";
+    box.appendChild(link);
+  }
+
+  const details = document.createElement("details");
+  details.className = "text-sm";
+  const summary = document.createElement("summary");
+  summary.className = "cursor-pointer font-medium";
+  summary.textContent = "Показать полное содержимое QR-кода";
+  const payload = document.createElement("pre");
+  payload.className = "mt-2 whitespace-pre-wrap break-all rounded-lg bg-white/70 p-3 font-mono text-xs dark:bg-black/20";
+  payload.textContent = result.value;
+  details.append(summary, payload);
+  box.appendChild(details);
+
+  const disclaimer = document.createElement("p");
+  disclaimer.className = "text-xs opacity-80";
+  disclaimer.textContent = "Проверка выполняется локально и по простым признакам формата. Репутация сайта и фактическое содержимое страницы не проверяются; предупреждений может быть недостаточно.";
+  box.appendChild(disclaimer);
+
+  container.replaceChildren(box);
+}
+
 function renderTextTool(tool) {
   switch (tool.id) {
     case 'password-generator':
@@ -319,9 +486,27 @@ function renderTextTool(tool) {
         <div id="uuid-result" class="p-4 bg-slate-100 dark:bg-slate-900 rounded-xl font-mono text-center break-all"></div>`;
     case 'qr-generator':
       return `
-        <textarea id="qr-text" rows="3" placeholder="Введите текст или URL..." class="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500"></textarea>
-        <button id="gen-qr" class="mt-4 w-full py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold">Создать QR</button>
-        <div id="qr-result" class="mt-6 flex justify-center"></div>`;
+        <div class="space-y-6">
+          <section class="rounded-2xl border border-slate-200 dark:border-slate-700 p-4 sm:p-5">
+            <h2 class="font-semibold text-lg mb-3">Создать QR-код</h2>
+            <textarea id="qr-text" rows="3" placeholder="Введите текст или URL..." class="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500"></textarea>
+            <button id="gen-qr" type="button" class="mt-4 w-full py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold">Создать QR</button>
+            <div id="qr-result" class="mt-6 flex justify-center flex-wrap gap-3"></div>
+          </section>
+          <section class="rounded-2xl border border-slate-200 dark:border-slate-700 p-4 sm:p-5">
+            <h2 class="font-semibold text-lg mb-2">Сканировать QR из изображения</h2>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mb-3">Выберите фото или скриншот с QR-кодом. Изображение читается прямо в браузере и не загружается на сервер.</p>
+            <input id="qr-scan-file" type="file" accept="image/*" class="block w-full text-sm" />
+            <p id="qr-scan-status" role="status" aria-live="polite" class="mt-3 text-sm"></p>
+          </section>
+          <section class="rounded-2xl border border-slate-200 dark:border-slate-700 p-4 sm:p-5">
+            <h2 class="font-semibold text-lg mb-2">Проверить содержимое QR-кода</h2>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mb-3">Можно вставить текст, скопированный из любого сканера. Ссылки не открываются автоматически.</p>
+            <textarea id="qr-check-input" rows="3" placeholder="Вставьте содержимое QR-кода..." class="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500"></textarea>
+            <button id="qr-analyze" type="button" class="mt-3 w-full py-3 rounded-xl bg-slate-700 hover:bg-slate-800 text-white font-semibold">Проверить адрес и содержимое</button>
+            <div id="qr-analysis" class="mt-4" role="status" aria-live="polite"></div>
+          </section>
+        </div>`;
     case 'base64-encoder':
       return `
         <textarea id="b64-input" rows="5" placeholder="Текст..." class="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900"></textarea>
@@ -661,19 +846,98 @@ function initToolLogic(tool) {
   }
 
   if (tool.id === 'qr-generator') {
+    const qrText = document.getElementById('qr-text');
+    const qrResult = document.getElementById('qr-result');
+    const checkInput = document.getElementById('qr-check-input');
+    const analysis = document.getElementById('qr-analysis');
+    const scanStatus = document.getElementById('qr-scan-status');
+    const scanFile = document.getElementById('qr-scan-file');
+
     document.getElementById('gen-qr').addEventListener('click', () => {
-      const text = document.getElementById('qr-text').value.trim();
-      if (!text) return;
-      const res = document.getElementById('qr-result');
+      const text = qrText.value.trim();
+      if (!text) {
+        qrResult.textContent = 'Сначала введите текст или ссылку.';
+        return;
+      }
       try {
         if (typeof window.qrcode !== 'function') throw new Error('Локальная библиотека QR-кодов не загружена');
         const qr = window.qrcode(0, 'M');
         qr.addData(text, 'Byte');
         qr.make();
-        res.innerHTML = qr.createImgTag(5, 12, 'QR-код') +
-          '<p class="mt-2 text-sm text-slate-500">Код создан прямо в браузере. Сохраните изображение правой кнопкой мыши.</p>';
+        qrResult.innerHTML = qr.createImgTag(5, 12, 'QR-код') +
+          '<p class="mt-2 w-full text-center text-sm text-slate-500">Код создан прямо в браузере. Сохраните изображение правой кнопкой мыши.</p>';
       } catch (error) {
-        res.textContent = 'Не удалось создать QR-код: ' + (error && error.message ? error.message : String(error));
+        qrResult.textContent = 'Не удалось создать QR-код: ' + (error && error.message ? error.message : String(error));
+      }
+    });
+
+    document.getElementById('qr-analyze').addEventListener('click', () => {
+      renderQrAnalysis(analysis, checkInput.value);
+    });
+
+    scanFile.addEventListener('change', async () => {
+      const file = scanFile.files && scanFile.files[0];
+      if (!file) return;
+      scanStatus.textContent = '';
+      if (!file.type.startsWith('image/')) {
+        scanStatus.textContent = 'Выберите файл изображения.';
+        scanFile.value = '';
+        return;
+      }
+      if (file.size > 12 * 1024 * 1024) {
+        scanStatus.textContent = 'Изображение больше 12 МБ. Выберите файл поменьше.';
+        scanFile.value = '';
+        return;
+      }
+      if (typeof window.jsQR !== 'function') {
+        scanStatus.textContent = 'Локальный декодер QR-кодов не загружен.';
+        scanFile.value = '';
+        return;
+      }
+
+      let source = null;
+      let objectUrl = null;
+      try {
+        if (typeof createImageBitmap === 'function') {
+          source = await createImageBitmap(file);
+        } else {
+          objectUrl = URL.createObjectURL(file);
+          source = await new Promise((resolve, reject) => {
+            const image = new Image();
+            image.onload = () => resolve(image);
+            image.onerror = () => reject(new Error('Браузер не смог открыть изображение.'));
+            image.src = objectUrl;
+          });
+        }
+
+        const sourceWidth = source.width || source.naturalWidth;
+        const sourceHeight = source.height || source.naturalHeight;
+        if (!sourceWidth || !sourceHeight) throw new Error('Не удалось определить размер изображения.');
+        const scale = Math.min(1, 2400 / Math.max(sourceWidth, sourceHeight));
+        const width = Math.max(1, Math.round(sourceWidth * scale));
+        const height = Math.max(1, Math.round(sourceHeight * scale));
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const context = canvas.getContext('2d', { willReadFrequently: true });
+        if (!context) throw new Error('Canvas недоступен в этом браузере.');
+        context.drawImage(source, 0, 0, width, height);
+        const pixels = context.getImageData(0, 0, width, height);
+        const decoded = window.jsQR(pixels.data, width, height, { inversionAttempts: 'attemptBoth' });
+        if (!decoded) {
+          scanStatus.textContent = 'QR-код не найден. Попробуйте более чёткое изображение без сильного обрезания.';
+          return;
+        }
+        checkInput.value = decoded.data;
+        renderQrAnalysis(analysis, decoded.data);
+        scanStatus.textContent = 'QR-код распознан. Изображение обработано только в браузере.';
+      } catch (error) {
+        scanStatus.textContent = 'Не удалось прочитать изображение: ' +
+          (error && error.message ? error.message : String(error));
+      } finally {
+        if (source && typeof source.close === 'function') source.close();
+        if (objectUrl) URL.revokeObjectURL(objectUrl);
+        scanFile.value = '';
       }
     });
   }
