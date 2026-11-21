@@ -318,7 +318,7 @@ function inspectQrPayload(rawValue) {
   const dangerousSchemes = new Set(["javascript", "data", "file", "vbscript", "intent"]);
   if (schemeMatch && dangerousSchemes.has(schemeMatch[1].toLowerCase())) {
     add("danger", "Используется схема " + schemeMatch[1].toLowerCase() + ": она не является обычной веб-ссылкой и может запускать действие или открывать локальный ресурс.");
-    return { value, summary: "Нестандартная схема — не открывайте автоматически", level: "danger", warnings, href: null, host: "" };
+    return { value, summary: "Есть опасные признаки — не открывайте автоматически", level: "danger", warnings, href: null, host: "" };
   }
 
   let candidate = value;
