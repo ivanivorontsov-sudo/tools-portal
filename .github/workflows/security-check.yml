@@ -61,9 +61,12 @@ jobs:
           npm install --no-save playwright tailwindcss@3.4.19
           npx tailwindcss -c tailwind.config.cjs -i assets/css/tailwind.input.css -o /tmp/tailwind.min.css --minify
           npx playwright install --with-deps chromium
-          echo "CSS_BASE64_BEGIN"
-          base64 -w0 /tmp/tailwind.min.css | fold -w 4000
-          echo "CSS_BASE64_END"
+      - name: Upload generated CSS for PR verification
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-tailwind-css
+          path: /tmp/tailwind.min.css
+          if-no-files-found: error
       - name: Verify tracked production CSS
         run: |
           cmp --silent assets/css/tailwind.min.css /tmp/tailwind.min.css || {
