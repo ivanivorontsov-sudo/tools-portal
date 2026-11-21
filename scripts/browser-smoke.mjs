@@ -21,12 +21,16 @@ const page = await context.newPage();
 page.setDefaultTimeout(7000);
 let pageErrors = [];
 let localFailures = [];
+let externalRequests = 0;
 page.on("pageerror", error => pageErrors.push(error.message));
 page.on("response", response => {
   if (response.url().startsWith(BASE) && response.status() >= 400) localFailures.push(response.status() + " " + response.url());
 });
 page.on("requestfailed", request => {
   if (request.url().startsWith(BASE)) localFailures.push("failed " + request.url());
+});
+page.on("request", request => {
+  if (!request.url().startsWith(BASE)) externalRequests++;
 });
 
 function record(label) {
@@ -214,9 +218,69 @@ const textTests = [
     if (!/^[0-9a-f-]{36}$/i.test(value)) errors.push("uuid-generator: invalid UUID output");
   }],
   ["qr-generator", async () => {
-    await page.locator("#qr-text").fill("https://example.com/audit");
+    const payload = "https://example.com/qr-image-smoke";
+    await page.locator("#qr-text").fill(payload);
     await page.locator("#gen-qr").click();
     await page.waitForSelector("#qr-result img", { timeout: 5000 });
+
+    const dataUrl = await page.evaluate(value => {
+      const qr = window.qrcode(0, "M");
+      qr.addData(value, "Byte");
+      qr.make();
+      const markup = qr.createImgTag(5, 12, "QR");
+      const match = markup.match(/src=["']([^"']+)["']/);
+      return match ? match[1] : "";
+    }, payload);
+    if (!dataUrl.startsWith("data:image/")) {
+      errors.push("qr-generator: local QR image fixture was not created");
+      return;
+    }
+    const mimeType = dataUrl.slice(5, dataUrl.indexOf(";"));
+    const extension = mimeType === "image/png" ? "png" : "gif";
+    const imageBuffer = Buffer.from(dataUrl.slice(dataUrl.indexOf(",") + 1), "base64");
+    const externalBefore = externalRequests;
+    await page.locator("#qr-scan-file").setInputFiles({
+      name: "qr-smoke." + extension,
+      mimeType,
+      buffer: imageBuffer
+    });
+    await page.waitForFunction(() =>
+      document.querySelector("#qr-scan-status")?.textContent.includes("распознан") ||
+      document.querySelector("#qr-scan-status")?.textContent.includes("не найден") ||
+      document.querySelector("#qr-scan-status")?.textContent.includes("Не удалось"),
+      null,
+      { timeout: 10000 }
+    );
+    const scanStatus = await page.locator("#qr-scan-status").innerText();
+    if (!scanStatus.includes("распознан")) errors.push("qr-generator: image scan failed: " + scanStatus);
+    if ((await page.locator("#qr-check-input").inputValue()) !== payload) {
+      errors.push("qr-generator: decoded QR payload does not match the source");
+    }
+    if (!(await page.locator("#qr-analysis").innerText()).includes("example.com")) {
+      errors.push("qr-generator: decoded URL was not analysed");
+    }
+    if (externalRequests !== externalBefore) {
+      errors.push("qr-generator: scanning an image triggered an external network request");
+    }
+
+    await page.locator("#qr-check-input").fill("http://user:secret@xn--e1afmkfd.xn--p1ai:8080/?utm_source=smoke");
+    await page.locator("#qr-analyze").click();
+    const warnings = await page.locator("#qr-analysis").innerText();
+    for (const term of ["HTTP", "Punycode", "пароль", "порт", "отслеживания"]) {
+      if (!warnings.includes(term)) errors.push("qr-generator: missing warning for " + term);
+    }
+    if (await page.locator("#qr-analysis a").count()) {
+      errors.push("qr-generator: credential-bearing URL was made clickable");
+    }
+
+    await page.locator("#qr-check-input").fill("javascript:alert(1)");
+    await page.locator("#qr-analyze").click();
+    if (!(await page.locator("#qr-analysis").innerText()).includes("опасные признаки")) {
+      errors.push("qr-generator: dangerous URL scheme was not rejected");
+    }
+    if (await page.locator("#qr-analysis a").count()) {
+      errors.push("qr-generator: dangerous scheme received an open link");
+    }
   }],
   ["base64-encoder", async () => {
     await page.locator("#b64-input").fill("audit");

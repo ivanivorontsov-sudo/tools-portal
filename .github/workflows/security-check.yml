@@ -50,6 +50,7 @@ jobs:
         run: |
           node --check assets/js/app.js
           node --check assets/js/tools-data.js
+          node --check assets/js/vendor/jsQR.js
           node --check assets/js/regex-worker.js
           node --check funny-generators/app.js
           node --check pdf-master/app.mjs
