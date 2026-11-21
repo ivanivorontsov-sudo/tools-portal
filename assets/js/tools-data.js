@@ -58,7 +58,7 @@ const TOOLS = [
   { id: "image-compressor", name: "Сжатие изображений", category: "utility", icon: "fa-compress", desc: "Перекодирование JPG/PNG/WEBP; размер файла может как уменьшиться, так и увеличиться", client: true },
   { id: "pdf-merger", name: "Объединение PDF", category: "utility", icon: "fa-object-group", desc: "Объединение нескольких PDF в один", client: false },
   { id: "pdf-splitter", name: "Разделение PDF", category: "utility", icon: "fa-cut", desc: "Разделение PDF на страницы", client: false },
-  { id: "qr-generator", name: "Генератор QR-кодов", category: "utility", icon: "fa-qrcode", desc: "Создание QR-кодов из текста/URL", client: true },
+  { id: "qr-generator", name: "QR-коды и проверка ссылок", category: "utility", icon: "fa-qrcode", desc: "Создание QR-кодов, чтение из изображений и локальная проверка ссылок перед переходом", client: true },
   { id: "password-generator", name: "Генератор паролей", category: "utility", icon: "fa-key", desc: "Надёжные случайные пароли", client: true },
   { id: "unit-converter", name: "Конвертер единиц", category: "utility", icon: "fa-ruler", desc: "Длина, вес, температура, объём и др.", client: true },
   { id: "color-picker", name: "Палитра цветов", category: "utility", icon: "fa-palette", desc: "Выбор цвета и конвертация HEX/RGB/HSL", client: true },
